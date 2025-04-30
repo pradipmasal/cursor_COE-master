@@ -16,7 +16,10 @@ urlpatterns = [
     path('direct-issue-component/', views.direct_issue_component, name='direct_issue_component'),
     path('scan-barcode/', views.scan_barcode, name='scan_barcode'),
     path('generate-barcode/<int:pk>/', views.generate_barcode, name='generate_barcode'),
-    path('users/<int:user_id>/dashboard/', views.user_dashboard, name='user_dashboard'),
+    path('analytics/', views.analytics_dashboard, name='analytics_dashboard'),
+    path('delete-user/<int:user_id>/', views.delete_user_view, name='delete_user'),
+    path('user-dashboard/<int:user_id>/', views.user_dashboard, name='user_dashboard'),
+   
 
     
     # API endpoints

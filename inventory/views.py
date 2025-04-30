@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import login
 from django.contrib import messages
-from django.db.models import Count
+from django.db.models import Count, Sum
 from .models import Component, IssueRequest, UserProfile, User
 from .forms import UserRegisterForm, ComponentForm, IssueRequestForm, IssueRequestUpdateForm, DirectIssueComponentForm
 from django.utils import timezone
@@ -14,6 +14,7 @@ import barcode
 from barcode.writer import ImageWriter
 import os
 from django.conf import settings
+import json
 
 
 
@@ -40,58 +41,113 @@ def register(request):
 
 @login_required
 def home(request):
-    search_query = request.GET.get('search', '')
-    user_search_query = request.GET.get('user_search', '')
-    issued_search_query = request.GET.get('issued_search', '')
-    
-    if request.user.userprofile.is_admin or request.user.is_staff :
+    if request.user.userprofile.is_admin or request.user.is_staff:
+        # Admin/Staff view
         components = Component.objects.all()
-        if search_query:
-            components = components.filter(name__icontains=search_query) | components.filter(description__icontains=search_query)
-        
-        # Get all pending requests regardless of admin
         pending_requests = IssueRequest.objects.filter(status='pending')
-        # Get all approved requests regardless of admin
-        issued_requests = IssueRequest.objects.filter(status='approved').order_by('-issue_date')
-        
-        # Apply search filter for issued requests
-        if issued_search_query:
-            issued_requests = issued_requests.filter(
-                Q(component__name__icontains=issued_search_query) |
-                Q(student__username__icontains=issued_search_query) |
-                Q(notes__icontains=issued_search_query)
-            )
-        
-        # Get users for user management
+        issued_requests = IssueRequest.objects.filter(status='approved')
         users = User.objects.all()
-        if user_search_query:
-            users = users.filter(
-                Q(username__icontains=user_search_query) |
-                Q(email__icontains=user_search_query) |
-                Q(first_name__icontains=user_search_query) |
-                Q(last_name__icontains=user_search_query)
-            )
         
-        return render(request, 'inventory/admin_home.html', {
+        # Analytics data
+        total_components = Component.objects.count()
+        available_components = Component.objects.filter(available=True).count()
+        unavailable_components = total_components - available_components
+        
+        # Request status distribution
+        status_data = {
+            'pending': IssueRequest.objects.filter(status='pending').count(),
+            'approved': IssueRequest.objects.filter(status='approved').count(),
+            'rejected': IssueRequest.objects.filter(status='rejected').count(),
+            'returned': IssueRequest.objects.filter(status='returned').count()
+        }
+        
+        # Daily requests for the last 30 days
+        thirty_days_ago = timezone.now() - timezone.timedelta(days=30)
+        daily_requests = IssueRequest.objects.filter(
+            request_date__gte=thirty_days_ago
+        ).values('request_date__date').annotate(
+            count=Count('id')
+        ).order_by('request_date__date')
+        
+        # Top requested components
+        top_components = IssueRequest.objects.values(
+            'component__name'
+        ).annotate(
+            count=Count('id')
+        ).order_by('-count')[:5]
+        
+        # Daily issues and returns for the last 30 days
+        daily_issues = IssueRequest.objects.filter(
+            issue_date__gte=thirty_days_ago,
+            status='approved'
+        ).values('issue_date__date').annotate(
+            count=Count('id')
+        ).order_by('issue_date__date')
+        
+        daily_returns = IssueRequest.objects.filter(
+            return_date__gte=thirty_days_ago,
+            status='returned'
+        ).values('return_date__date').annotate(
+            count=Count('id')
+        ).order_by('return_date__date')
+        
+        # Format data for charts
+        daily_requests_data = []
+        for item in daily_requests:
+            daily_requests_data.append({
+                'date': item['request_date__date'].strftime('%Y-%m-%d'),
+                'count': item['count']
+            })
+
+        daily_issues_data = []
+        for item in daily_issues:
+            daily_issues_data.append({
+                'date': item['issue_date__date'].strftime('%Y-%m-%d'),
+                'count': item['count']
+            })
+
+        daily_returns_data = []
+        for item in daily_returns:
+            daily_returns_data.append({
+                'date': item['return_date__date'].strftime('%Y-%m-%d'),
+                'count': item['count']
+            })
+
+        top_components_data = list(top_components.values('component__name', 'count'))
+
+        context = {
             'components': components,
             'pending_requests': pending_requests,
             'issued_requests': issued_requests,
             'users': users,
-            'search_query': search_query,
-            'user_search_query': user_search_query,
-            'issued_search_query': issued_search_query
-        })
-    else:
-        components = Component.objects.all()
-        if search_query:
-            components = components.filter(name__icontains=search_query) | components.filter(description__icontains=search_query)
+            'search_query': request.GET.get('search', ''),
+            'user_search_query': request.GET.get('user_search', ''),
+            'issued_search_query': request.GET.get('issued_search', ''),
+            # Analytics data
+            'total_components': total_components,
+            'available_components': available_components,
+            'unavailable_components': unavailable_components,
+            'status_data': status_data,
+            'daily_requests': json.dumps(daily_requests_data),
+            'daily_issues': json.dumps(daily_issues_data),
+            'daily_returns': json.dumps(daily_returns_data),
+            'top_components': json.dumps(top_components_data),
+        }
         
-        my_requests = IssueRequest.objects.filter(student=request.user)
-        return render(request, 'inventory/student_home.html', {
-            'components': components,
-            'my_requests': my_requests,
-            'search_query': search_query
-        })
+        return render(request, 'inventory/admin_home.html', context)
+    else:
+        # Student view
+        user = get_object_or_404(User, id=request.user.id)
+        my_requests = IssueRequest.objects.filter(student=user)
+        components = Component.objects.all()
+
+    context = {
+        'user': user,
+        'my_requests': my_requests,
+        'components': components
+    }
+        
+    return render(request, 'inventory/student_home.html', context)
 
 @user_passes_test(is_admin_or_staff)
 @login_required
@@ -664,5 +720,98 @@ def user_dashboard(request, user_id):
         'issued_components': issued_components,
         'returned_components': returned_components
     }
-    return render(request, 'inventory/user_dashboard.html', context)    
+    return render(request, 'inventory/user_dashboard.html', context)
 
+@user_passes_test(is_admin_or_staff)
+@login_required
+def analytics_dashboard(request):
+    # Get inventory status data
+    total_components = Component.objects.count()
+    available_components = Component.objects.filter(available=True).count()
+    unavailable_components = total_components - available_components
+
+    # Get request status distribution
+    status_data = {
+        'pending': IssueRequest.objects.filter(status='pending').count(),
+        'approved': IssueRequest.objects.filter(status='approved').count(),
+        'rejected': IssueRequest.objects.filter(status='rejected').count(),
+        'returned': IssueRequest.objects.filter(status='returned').count()
+    }
+
+    # Get request timeline data (last 30 days)
+    thirty_days_ago = timezone.now() - timedelta(days=30)
+    daily_requests = IssueRequest.objects.filter(
+        request_date__gte=thirty_days_ago
+    ).extra(
+        select={'date': 'DATE(request_date)'}
+    ).values('date').annotate(count=Count('id')).order_by('date')
+
+    # Format daily requests data
+    formatted_daily_requests = []
+    for item in daily_requests:
+        formatted_daily_requests.append({
+            'date': item['date'].strftime('%Y-%m-%d'),
+            'count': item['count']
+        })
+
+    # Get top requested components
+    top_components = IssueRequest.objects.values('component__name').annotate(
+        count=Count('id'),
+        total_quantity=Sum('quantity')
+    ).order_by('-count')[:10]
+
+    # Get issue vs return timeline
+    daily_issues = IssueRequest.objects.filter(
+        status='approved',
+        issue_date__gte=thirty_days_ago
+    ).extra(
+        select={'date': 'DATE(issue_date)'}
+    ).values('date').annotate(count=Count('id')).order_by('date')
+
+    # Format daily issues data
+    formatted_daily_issues = []
+    for item in daily_issues:
+        formatted_daily_issues.append({
+            'date': item['date'].strftime('%Y-%m-%d'),
+            'count': item['count']
+        })
+
+    daily_returns = IssueRequest.objects.filter(
+        status='returned',
+        return_date__gte=thirty_days_ago
+    ).extra(
+        select={'date': 'DATE(return_date)'}
+    ).values('date').annotate(count=Count('id')).order_by('date')
+
+    # Format daily returns data
+    formatted_daily_returns = []
+    for item in daily_returns:
+        formatted_daily_returns.append({
+            'date': item['date'].strftime('%Y-%m-%d'),
+            'count': item['count']
+        })
+
+    context = {
+        'total_components': total_components,
+        'available_components': available_components,
+        'unavailable_components': unavailable_components,
+        'status_data': status_data,
+        'daily_requests': formatted_daily_requests,
+        'top_components': list(top_components),
+        'daily_issues': formatted_daily_issues,
+        'daily_returns': formatted_daily_returns,
+    }
+
+    return render(request, 'inventory/analytics.html', context)
+
+@user_passes_test(is_admin)
+def user_dashboard(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    my_requests = IssueRequest.objects.filter(student=user)
+
+
+    context = {
+        'user': user,
+        'my_requests': my_requests
+    }
+    return render(request, 'inventory/user_dashboard.html', context)    

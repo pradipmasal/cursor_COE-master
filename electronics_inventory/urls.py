@@ -24,6 +24,7 @@ from inventory import views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.home, name='home'),
+    path('admin-home/', views.home, name='admin_home'),
     path('register/', views.register, name='register'),
     path('add-component/', views.add_component, name='add_component'),
     path('edit-component/<int:pk>/', views.edit_component, name='edit_component'),
@@ -39,7 +40,8 @@ urlpatterns = [
     path('delete-user/<int:user_id>/', views.delete_user_view, name='delete_user'),
     path('login/', auth_views.LoginView.as_view(template_name='inventory/login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(template_name='inventory/logout.html'), name='logout'),
-     path('users/<int:user_id>/dashboard/', views.user_dashboard, name='user_dashboard'),
+    path('users/<int:user_id>/dashboard/', views.user_dashboard, name='user_dashboard'),
+    path('analytics/', views.analytics_dashboard, name='analytics_dashboard'),
     
     # Password Reset URLs
     path('password-reset/', 

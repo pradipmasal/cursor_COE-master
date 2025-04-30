@@ -24,7 +24,7 @@
             <ul class="nav nav-tabs mb-4" id="dashboardTabs" role="tablist">
                 <li class="nav-item" role="presentation">
                     <button class="nav-link active" id="issued-tab" data-bs-toggle="tab" data-bs-target="#issued" type="button" role="tab" aria-controls="issued" aria-selected="true">
-                        <i class="fas fa-box me-2"></i>Issued Components
+                        <i class="fas fa-box me-2"></i>User History
                     </button>
                 </li>
                 
@@ -35,7 +35,7 @@
                 <div class="tab-pane fade show active" id="issued" role="tabpanel" aria-labelledby="issued-tab">
                     <div class="card shadow mb-4">
                         <div class="card-header py-3">
-                            <h6 class="m-0 font-weight-bold text-primary">Currently Issued Components</h6>
+                            <h6 class="m-0 font-weight-bold text-primary">IssueRequest Components</h6>
                         </div>
                         <div class="card-body">
                             <div class="table-responsive">
@@ -55,21 +55,24 @@
                                             <th>Quantity</th>
                                             <th>Issue Date</th>
                                             <th>Return Deadline</th>
+                                            <th>Return Date</th>
                                             <th>Notes</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {% for request in issued_components %}
+                                        {% for request in my_requests %}
                                         <tr data-status="{% if request.is_returned %}returned{% elif request.is_overdue %}overdue{% else %}{{ request.status }}{% endif %}">
                                             <td>{{ request.component.name }}</td>
                                             <td>{{ request.quantity }}</td>
                                             <td>{{ request.issue_date|date:"F j, Y, g:i a" }}</td>
+                                            
                                             <td class="{% if request.is_overdue %}text-danger{% endif %}">
                                                 {{ request.return_deadline|date:"F j, Y, g:i a" }}
                                                 {% if request.is_overdue %}
                                                     <span class="badge bg-danger">Overdue</span>
                                                 {% endif %}
                                             </td>
+                                            <td>{{ request.return_date }}</td>
                                             <td>{{ request.notes|default:"-" }}</td>
                                         </tr>
                                         {% empty %}
