@@ -16,6 +16,8 @@ urlpatterns = [
     path('direct-issue-component/', views.direct_issue_component, name='direct_issue_component'),
     path('scan-barcode/', views.scan_barcode, name='scan_barcode'),
     path('generate-barcode/<int:pk>/', views.generate_barcode, name='generate_barcode'),
+    path('users/<int:user_id>/dashboard/', views.user_dashboard, name='user_dashboard'),
+
     
     # API endpoints
     path('api/search-students/', views.search_students, name='search_students'),

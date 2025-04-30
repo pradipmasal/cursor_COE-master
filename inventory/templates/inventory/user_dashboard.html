@@ -1,0 +1,125 @@
+{% extends 'inventory/base.html' %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <div class="row">
+        <div class="col-12">
+            <!-- Dashboard Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0 text-gray-800">User Dashboard</h1>
+                <div class="d-flex align-items-center">
+                    <span class="me-3">Welcome, {{ user.username }}</span>
+                </div>
+            </div>
+            <!-- User Details -->
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title">User Information</h5>
+        <p><strong>Username:</strong> {{ user.username }}</p>
+        <p><strong>Email:</strong> {{ user.email }}</p>
+        
+    </div>
+</div>
+            <!-- Tabs Navigation -->
+            <ul class="nav nav-tabs mb-4" id="dashboardTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="issued-tab" data-bs-toggle="tab" data-bs-target="#issued" type="button" role="tab" aria-controls="issued" aria-selected="true">
+                        <i class="fas fa-box me-2"></i>Issued Components
+                    </button>
+                </li>
+                
+            </ul>
+
+            <div class="tab-content" id="dashboardTabsContent">
+                <!-- Issued Components Tab -->
+                <div class="tab-pane fade show active" id="issued" role="tabpanel" aria-labelledby="issued-tab">
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">Currently Issued Components</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <div class="mb-3">
+                                    <div class="btn-group" role="group" aria-label="Filter requests">
+                                        <button class="btn btn-outline-primary filter-btn active" data-status="all">All</button>
+                                        <button class="btn btn-outline-success filter-btn" data-status="approved">Approved</button>
+                                        <button class="btn btn-outline-info filter-btn" data-status="returned">Returned</button>
+                                        <button class="btn btn-outline-warning filter-btn" data-status="overdue">Overdue</button>
+                                        <button class="btn btn-outline-danger filter-btn" data-status="rejected">Rejected</button>
+                                    </div>
+                                </div>
+                                <table class="table table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Component</th>
+                                            <th>Quantity</th>
+                                            <th>Issue Date</th>
+                                            <th>Return Deadline</th>
+                                            <th>Notes</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for request in issued_components %}
+                                        <tr data-status="{% if request.is_returned %}returned{% elif request.is_overdue %}overdue{% else %}{{ request.status }}{% endif %}">
+                                            <td>{{ request.component.name }}</td>
+                                            <td>{{ request.quantity }}</td>
+                                            <td>{{ request.issue_date|date:"F j, Y, g:i a" }}</td>
+                                            <td class="{% if request.is_overdue %}text-danger{% endif %}">
+                                                {{ request.return_deadline|date:"F j, Y, g:i a" }}
+                                                {% if request.is_overdue %}
+                                                    <span class="badge bg-danger">Overdue</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ request.notes|default:"-" }}</td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="5" class="text-center py-4">
+                                                <div class="text-muted">
+                                                    <i class="fas fa-box-open fa-2x mb-2"></i>
+                                                    <p>No components currently issued</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                
+        </div>
+    </div>
+</div>
+
+<!-- Add Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        const rows = document.querySelectorAll('tbody tr[data-status]');
+    
+        filterButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                // Remove "active" class from all buttons
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+    
+                const filter = button.getAttribute('data-status');
+    
+                rows.forEach(row => {
+                    const status = row.getAttribute('data-status');
+                    if (filter === 'all' || status === filter) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            });
+        });
+    });
+    </script>
+{% endblock %}

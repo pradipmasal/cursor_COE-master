@@ -15,8 +15,13 @@ from barcode.writer import ImageWriter
 import os
 from django.conf import settings
 
+
+
 def is_admin(user):
     return user.userprofile.is_admin
+
+def is_admin_or_staff(user):
+    return user.userprofile.is_admin or user.is_staff
 
 def register(request):
     if request.method == 'POST':
@@ -88,7 +93,7 @@ def home(request):
             'search_query': search_query
         })
 
-@user_passes_test(is_admin)
+@user_passes_test(is_admin_or_staff)
 @login_required
 def add_component(request):
     if request.method == 'POST':
@@ -101,7 +106,7 @@ def add_component(request):
         form = ComponentForm()
     return render(request, 'inventory/add_component.html', {'form': form})
 
-@user_passes_test(is_admin)
+@user_passes_test(is_admin_or_staff)
 @login_required
 def edit_component(request, pk):
     component = get_object_or_404(Component, pk=pk)
@@ -115,7 +120,7 @@ def edit_component(request, pk):
         form = ComponentForm(instance=component)
     return render(request, 'inventory/edit_component.html', {'form': form, 'component': component})
 
-@user_passes_test(is_admin)
+@user_passes_test(is_admin_or_staff)
 @login_required
 def delete_component(request, pk):
     component = get_object_or_404(Component, pk=pk)
@@ -149,7 +154,7 @@ def request_component(request, pk):
         form = IssueRequestForm(component=component)
     return render(request, 'inventory/request_component.html', {'form': form, 'component': component})
 
-@user_passes_test(is_admin)
+@user_passes_test(is_admin_or_staff)
 @login_required
 def update_request(request, pk):
     issue_request = get_object_or_404(IssueRequest, pk=pk)
@@ -170,9 +175,6 @@ def update_request(request, pk):
     else:
         form = IssueRequestUpdateForm(instance=issue_request)
     return render(request, 'inventory/update_request.html', {'form': form, 'issue_request': issue_request})
-
-def is_admin_or_staff(user):
-    return user.userprofile.is_admin or user.is_staff
 
 @user_passes_test(is_admin_or_staff)
 @login_required
@@ -454,7 +456,7 @@ def generate_excel_report(components, requests, total_requests, pending_requests
     response['Content-Disposition'] = 'attachment; filename="inventory_report.xlsx"'
     return response
 
-@user_passes_test(is_admin)
+@user_passes_test(is_admin_or_staff)
 @login_required
 def direct_issue_component(request):
     if request.method == 'POST':
@@ -521,7 +523,7 @@ def direct_issue_component(request):
         'components': components
     })
 
-@user_passes_test(is_admin)
+@user_passes_test(is_admin_or_staff)
 @login_required
 def search_students(request):
     query = request.GET.get('q', '')
@@ -543,7 +545,7 @@ def search_students(request):
     
     return JsonResponse(results, safe=False)
 
-@user_passes_test(is_admin)
+@user_passes_test(is_admin_or_staff)
 @login_required
 def search_components(request):
     query = request.GET.get('q', '')
@@ -565,7 +567,7 @@ def search_components(request):
     
     return JsonResponse(results, safe=False)
 
-@user_passes_test(is_admin)
+@user_passes_test(is_admin_or_staff)
 @login_required
 def scan_barcode(request):
     if request.method == 'POST':
@@ -622,3 +624,45 @@ def generate_barcode(request, pk):
     except Exception as e:
         messages.error(request, f'Error generating barcode: {str(e)}')
         return redirect('home')
+
+@user_passes_test(lambda u: u.is_superuser)
+def delete_user_view(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+
+    # Check if the user has any issued components
+    issued_requests = IssueRequest.objects.filter(
+        student=user,
+        status='approved'
+    )
+    
+    if issued_requests.exists():
+        messages.error(request, f"User '{user.username}' cannot be deleted — they have issued components that need to be returned first.")
+        return redirect('home')
+
+    # Get all pending requests by this user
+    pending_requests = IssueRequest.objects.filter(
+        student=user,
+        status='pending'
+    )
+    
+    # Delete all pending requests
+    pending_requests.delete()
+
+    # Delete the user
+    user.delete()
+    messages.success(request, f"User '{user.username}' was deleted successfully.")
+    return redirect('home')
+
+@user_passes_test(is_admin)
+def user_dashboard(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    issued_components = IssueRequest.objects.filter(student=user, status='approved')
+    returned_components = IssueRequest.objects.filter(student=user, status='returned')
+
+    context = {
+        'user': user,
+        'issued_components': issued_components,
+        'returned_components': returned_components
+    }
+    return render(request, 'inventory/user_dashboard.html', context)    
+

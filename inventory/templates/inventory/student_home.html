@@ -104,6 +104,15 @@
                         </div>
                         <div class="card-body">
                             <div class="table-responsive">
+                                <div class="mb-3">
+                                    <div class="btn-group" role="group" aria-label="Filter requests">
+                                        <button class="btn btn-outline-primary filter-btn active" data-status="all">All</button>
+                                        <button class="btn btn-outline-success filter-btn" data-status="approved">Approved</button>
+                                        <button class="btn btn-outline-info filter-btn" data-status="returned">Returned</button>
+                                        <button class="btn btn-outline-warning filter-btn" data-status="overdue">Overdue</button>
+                                        <button class="btn btn-outline-danger filter-btn" data-status="rejected">Rejected</button>
+                                    </div>
+                                </div>
                                 <table class="table table-hover">
                                     <thead class="table-light">
                                         <tr>
@@ -117,7 +126,7 @@
                                     </thead>
                                     <tbody>
                                         {% for request in my_requests %}
-                                        <tr>
+                                        <tr data-status="{% if request.is_returned %}returned{% elif request.is_overdue %}overdue{% else %}{{ request.status }}{% endif %}">
                                             <td>{{ request.component.name }}</td>
                                             <td>{{ request.quantity }}</td>
                                             <td>{{ request.request_date|date:"F j, Y, g:i a" }}</td>
@@ -375,4 +384,29 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        const rows = document.querySelectorAll('tbody tr[data-status]');
+    
+        filterButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                // Remove "active" class from all buttons
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+    
+                const filter = button.getAttribute('data-status');
+    
+                rows.forEach(row => {
+                    const status = row.getAttribute('data-status');
+                    if (filter === 'all' || status === filter) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            });
+        });
+    });
+    </script>
 {% endblock %}

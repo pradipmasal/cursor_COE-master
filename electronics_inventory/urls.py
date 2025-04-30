@@ -36,8 +36,10 @@ urlpatterns = [
     path('search-components/', views.search_components, name='search_components'),
     path('scan-barcode/', views.scan_barcode, name='scan_barcode'),
     path('generate-barcode/<int:pk>/', views.generate_barcode, name='generate_barcode'),
+    path('delete-user/<int:user_id>/', views.delete_user_view, name='delete_user'),
     path('login/', auth_views.LoginView.as_view(template_name='inventory/login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(template_name='inventory/logout.html'), name='logout'),
+     path('users/<int:user_id>/dashboard/', views.user_dashboard, name='user_dashboard'),
     
     # Password Reset URLs
     path('password-reset/', 
