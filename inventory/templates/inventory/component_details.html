@@ -1,0 +1,125 @@
+{% extends 'inventory/base.html' %}
+
+{% block title %}Component Details{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Component Details</h6>
+                    <a href="{% url 'scan_barcode' %}" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-arrow-left me-1"></i>Back to Scanner
+                    </a>
+                </div>
+                <div class="card-body">
+                    <!-- Component Information -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h4>Component Information</h4>
+                            <table class="table">
+                                <tr>
+                                    <th>Name:</th>
+                                    <td>{{ component.name }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Description:</th>
+                                    <td>{{ component.description }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Barcode:</th>
+                                    <td>
+                                        {{ component.barcode }}
+                                        <a href="{% url 'generate_barcode' component.pk %}" class="btn btn-sm btn-outline-primary ms-2">
+                                            <i class="fas fa-barcode me-1"></i>Generate Barcode
+                                        </a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Quantity:</th>
+                                    <td>{{ component.quantity }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Status:</th>
+                                    <td>
+                                        {% if component.available %}
+                                            <span class="badge bg-success">Available</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Unavailable</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h4>Quick Actions</h4>
+                            <div class="d-grid gap-2">
+                                <a href="{% url 'edit_component' component.pk %}" class="btn btn-primary">
+                                    <i class="fas fa-edit me-1"></i>Edit Component
+                                </a>
+                                <a href="{% url 'direct_issue_component' %}?barcode={{ component.barcode }}" class="btn btn-success{% if not component.available %} disabled opacity-50 pointer-events-none{% endif %}" {% if not component.available %}tabindex="-1" aria-disabled="true"{% endif %}>
+                                    <i class="fas fa-hand-holding me-1"></i>Issue Component
+                                </a>
+                                <a href="{% url 'generate_barcode' component.pk %}" class="btn btn-warning">
+                                    <i class="fas fa-barcode me-1"></i>Generate Barcode
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Issue History -->
+                    <h4>Issue History</h4>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Requested By</th>
+                                    <th>Quantity</th>
+                                    <th>Status</th>
+                                    <th>Request Date</th>
+                                    <th>Issue Date</th>
+                                    <th>Return Deadline</th>
+                                    <th>Return Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for request in issue_history %}
+                                <tr>
+                                    <td>{{ request.student.username }}</td>
+                                    <td>{{ request.quantity }}</td>
+                                    <td>
+                                        <span class="badge {% if request.status == 'approved' %}bg-success{% elif request.status == 'pending' %}bg-warning{% elif request.status == 'rejected' %}bg-danger{% else %}bg-info{% endif %}">
+                                            {{ request.status|title }}
+                                        </span>
+                                    </td>
+                                    <td>{{ request.request_date|date:"F j, Y, g:i a" }}</td>
+                                    <td>{{ request.issue_date|date:"F j, Y, g:i a"|default:"-" }}</td>
+                                    <td class="{% if request.is_overdue %}text-danger{% endif %}">
+                                        {{ request.return_deadline|date:"F j, Y, g:i a"|default:"-" }}
+                                        {% if request.is_overdue %}
+                                            <span class="badge bg-danger">Overdue</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ request.return_date|date:"F j, Y, g:i a"|default:"-" }}</td>
+                                    <td>
+                                        <a href="{% url 'update_request' request.pk %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="8" class="text-center">No issue history found</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

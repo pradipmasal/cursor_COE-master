@@ -1,0 +1,378 @@
+{% extends 'inventory/base.html' %}
+
+{% block title %}Student Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <div class="row">
+        <div class="col-12">
+            <!-- Dashboard Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0 text-gray-800">Student Dashboard</h1>
+                <div class="d-flex align-items-center">
+                    <span class="me-3">Welcome, {{ request.user.username }}</span>
+                </div>
+            </div>
+
+            <!-- Tabs Navigation -->
+            <ul class="nav nav-tabs mb-4" id="dashboardTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="components-tab" data-bs-toggle="tab" data-bs-target="#components" type="button" role="tab" aria-controls="components" aria-selected="true">
+                        <i class="fas fa-microchip me-2"></i>Available Components
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="requests-tab" data-bs-toggle="tab" data-bs-target="#requests" type="button" role="tab" aria-controls="requests" aria-selected="false">
+                        <i class="fas fa-clock me-2"></i>My Requests
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="dashboardTabsContent">
+                <!-- Components Tab -->
+                <div class="tab-pane fade show active" id="components" role="tabpanel" aria-labelledby="components-tab">
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                            <h6 class="m-0 font-weight-bold text-primary">Available Components</h6>
+                            <div class="input-group" style="max-width: 300px;">
+                                <input type="search" id="componentSearch" class="form-control form-control-sm" 
+                                       placeholder="Search components..." value="{{ search_query }}">
+                                <span class="input-group-text">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Description</th>
+                                            <th>Quantity</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="componentsTableBody">
+                                        {% for component in components %}
+                                        <tr>
+                                            <td>{{ component.name }}</td>
+                                            <td>{{ component.description }}</td>
+                                            <td>{{ component.quantity }}</td>
+                                            <td>
+                                                {% if component.available %}
+                                                    <span class="badge bg-success">Available</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">Unavailable</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if component.available %}
+                                                    <a href="{% url 'request_component' component.pk %}" class="btn btn-primary btn-sm">
+                                                        <i class="fas fa-hand-holding me-1"></i>Request
+                                                    </a>
+                                                {% else %}
+                                                    <button class="btn btn-secondary btn-sm" disabled>
+                                                        <i class="fas fa-ban me-1"></i>Unavailable
+                                                    </button>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="5" class="text-center py-4">
+                                                <div class="text-muted">
+                                                    <i class="fas fa-box-open fa-2x mb-2"></i>
+                                                    <p>No components available</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- My Requests Tab -->
+                <div class="tab-pane fade" id="requests" role="tabpanel" aria-labelledby="requests-tab">
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">My Requests</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Component</th>
+                                            <th>Quantity</th>
+                                            <th>Request Date</th>
+                                            <th>Status</th>
+                                            <th>Return Deadline</th>
+                                            <th>Notes</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for request in my_requests %}
+                                        <tr>
+                                            <td>{{ request.component.name }}</td>
+                                            <td>{{ request.quantity }}</td>
+                                            <td>{{ request.request_date|date:"F j, Y, g:i a" }}</td>
+                                            <td>
+                                                <span class="badge {% if request.status == 'approved' %}bg-success{% elif request.status == 'pending' %}bg-warning{% elif request.status == 'rejected' %}bg-danger{% else %}bg-info{% endif %}">
+                                                    {{ request.status|title }}
+                                                </span>
+                                            </td>
+                                            <td class="{% if request.is_overdue %}text-danger{% endif %}">
+                                                {% if request.status == 'approved' %}
+                                                    {{ request.return_deadline|date:"F j, Y, g:i a" }}
+                                                    {% if request.is_overdue %}
+                                                        <span class="badge bg-danger">Overdue</span>
+                                                    {% endif %}
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if request.status == 'rejected' %}
+                                                    <span class="text-danger">{{ request.rejection_reason }}</span>
+                                                {% else %}
+                                                    {{ request.notes|default:"-" }}
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="6" class="text-center py-4">
+                                                <div class="text-muted">
+                                                    <i class="fas fa-inbox fa-2x mb-2"></i>
+                                                    <p>No requests found</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+<style>
+/* Custom styles for better responsiveness and professional look */
+.container-fluid {
+    padding: 1.5rem;
+}
+
+.card {
+    border: none;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+}
+
+.card-header {
+    background-color: #f8f9fc;
+    border-bottom: 1px solid #e3e6f0;
+}
+
+.nav-tabs {
+    border-bottom: 1px solid #e3e6f0;
+}
+
+.nav-tabs .nav-link {
+    border: none;
+    color: #6e707e;
+    padding: 0.75rem 1rem;
+    font-weight: 500;
+}
+
+.nav-tabs .nav-link.active {
+    color: #4e73df;
+    border-bottom: 2px solid #4e73df;
+    background: none;
+}
+
+.table {
+    margin-bottom: 0;
+}
+
+.table th {
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.05em;
+}
+
+.btn-group-sm > .btn {
+    padding: 0.25rem 0.5rem;
+}
+
+.badge {
+    font-weight: 500;
+    padding: 0.35em 0.65em;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .card-header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .d-flex {
+        flex-wrap: wrap;
+    }
+    
+    .table-responsive {
+        margin: 0 -1rem;
+    }
+    
+    .btn-group-sm {
+        display: flex;
+        gap: 0.25rem;
+    }
+}
+
+/* Empty state styling */
+.text-muted {
+    color: #858796 !important;
+}
+
+.text-muted i {
+    color: #dddfeb;
+}
+
+/* Hover effects */
+.table-hover tbody tr:hover {
+    background-color: #f8f9fc;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+/* Status badge colors */
+.badge.bg-success {
+    background-color: #1cc88a !important;
+}
+
+.badge.bg-warning {
+    background-color: #f6c23e !important;
+}
+
+.badge.bg-danger {
+    background-color: #e74a3b !important;
+}
+
+.badge.bg-info {
+    background-color: #36b9cc !important;
+}
+
+/* Table cell padding */
+.table td {
+    padding: 0.75rem;
+    vertical-align: middle;
+}
+
+/* Button styles */
+.btn-primary {
+    background-color: #4e73df;
+    border-color: #4e73df;
+}
+
+.btn-primary:hover {
+    background-color: #2e59d9;
+    border-color: #2653d4;
+}
+
+.btn-secondary {
+    background-color: #858796;
+    border-color: #858796;
+}
+
+.btn-secondary:hover {
+    background-color: #717384;
+    border-color: #6b6d7d;
+}
+
+/* Search input styling */
+.input-group-text {
+    background-color: #f8f9fc;
+    border-color: #d1d3e2;
+    color: #6e707e;
+}
+
+.input-group .form-control {
+    border-right: none;
+}
+
+.input-group .input-group-text {
+    border-left: none;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('componentSearch');
+    const tableBody = document.getElementById('componentsTableBody');
+    const rows = tableBody.getElementsByTagName('tr');
+    let searchTimeout;
+
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        const searchTerm = this.value.toLowerCase();
+
+        searchTimeout = setTimeout(() => {
+            for (let row of rows) {
+                const name = row.cells[0].textContent.toLowerCase();
+                const description = row.cells[1].textContent.toLowerCase();
+                
+                if (name.includes(searchTerm) || description.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            }
+
+            // Check if all rows are hidden
+            let allHidden = true;
+            for (let row of rows) {
+                if (row.style.display !== 'none') {
+                    allHidden = false;
+                    break;
+                }
+            }
+
+            // Show "no results" message if needed
+            const noResultsRow = tableBody.querySelector('.no-results');
+            if (allHidden && !noResultsRow) {
+                const newRow = document.createElement('tr');
+                newRow.className = 'no-results';
+                newRow.innerHTML = `
+                    <td colspan="5" class="text-center py-4">
+                        <div class="text-muted">
+                            <i class="fas fa-search fa-2x mb-2"></i>
+                            <p>No components found matching "${searchTerm}"</p>
+                        </div>
+                    </td>
+                `;
+                tableBody.appendChild(newRow);
+            } else if (!allHidden && noResultsRow) {
+                noResultsRow.remove();
+            }
+        }, 300); // 300ms delay for better performance
+    });
+});
+</script>
+{% endblock %}

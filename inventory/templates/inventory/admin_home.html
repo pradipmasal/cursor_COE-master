@@ -1,0 +1,633 @@
+{% extends 'inventory/base.html' %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <div class="row">
+        <div class="col-12">
+            <!-- Dashboard Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0 text-gray-800">Admin Dashboard</h1>
+                <div class="d-flex align-items-center">
+                    <span class="me-3">Welcome, {{ request.user.username }}</span>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <a href="{% url 'add_component' %}" class="card text-decoration-none">
+                        <div class="card-body text-center">
+                            <i class="fas fa-plus-circle fa-2x text-primary mb-2"></i>
+                            <h5 class="card-title">Add Component</h5>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{% url 'direct_issue_component' %}" class="card text-decoration-none">
+                        <div class="card-body text-center">
+                            <i class="fas fa-hand-holding fa-2x text-success mb-2"></i>
+                            <h5 class="card-title">Direct Issue</h5>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{% url 'generate_report' %}" class="card text-decoration-none">
+                        <div class="card-body text-center">
+                            <i class="fas fa-file-alt fa-2x text-info mb-2"></i>
+                            <h5 class="card-title">Generate Report</h5>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{% url 'scan_barcode' %}" class="card text-decoration-none">
+                        <div class="card-body text-center">
+                            <i class="fas fa-barcode fa-2x text-warning mb-2"></i>
+                            <h5 class="card-title">Scan Barcode</h5>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Tabs Navigation -->
+            <ul class="nav nav-tabs mb-4" id="dashboardTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="components-tab" data-bs-toggle="tab" data-bs-target="#components" type="button" role="tab" aria-controls="components" aria-selected="true">
+                        <i class="fas fa-microchip me-2"></i>Components
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="requests-tab" data-bs-toggle="tab" data-bs-target="#requests" type="button" role="tab" aria-controls="requests" aria-selected="false">
+                        <i class="fas fa-clock me-2"></i>Pending Requests
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="issued-tab" data-bs-toggle="tab" data-bs-target="#issued" type="button" role="tab" aria-controls="issued" aria-selected="false">
+                        <i class="fas fa-box me-2"></i>Issued Components
+                    </button>
+                </li>
+                {% if request.user.is_superuser %}
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button" role="tab" aria-controls="users" aria-selected="false">
+                        <i class="fas fa-users me-2"></i>User Management
+                    </button>
+                </li>
+                {% endif %}
+            </ul>
+
+            <div class="tab-content" id="dashboardTabsContent">
+                <!-- Components Tab -->
+                <div class="tab-pane fade show active" id="components" role="tabpanel" aria-labelledby="components-tab">
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                            <h6 class="m-0 font-weight-bold text-primary">Components</h6>
+                            <div class="d-flex flex-wrap gap-2">
+                                <div class="input-group">
+                                    <input class="form-control form-control-sm" type="search" id="componentsSearchInput" placeholder="Search components..." value="{{ search_query }}">
+                                    <button class="btn btn-outline-primary btn-sm" type="button">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Description</th>
+                                            <th>Quantity</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for component in components %}
+                                        <tr>
+                                            <td>{{ component.name }}</td>
+                                            <td>{{ component.description }}</td>
+                                            <td>{{ component.quantity }}</td>
+                                            <td>
+                                                {% if component.available %}
+                                                    <span class="badge bg-success">Available</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">Unavailable</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <a href="{% url 'edit_component' component.id %}" class="btn btn-sm btn-primary">
+                                                        <i class="fas fa-edit"></i> Edit
+                                                    </a>
+                                                    <a href="{% url 'delete_component' component.id %}" class="btn btn-sm btn-danger">
+                                                        <i class="fas fa-trash"></i> Delete
+                                                    </a>
+                                                    <a href="{% url 'generate_barcode' component.id %}" class="btn btn-sm btn-info">
+                                                        <i class="fas fa-barcode"></i> Download Barcode
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="5" class="text-center py-4">
+                                                <div class="text-muted">
+                                                    <i class="fas fa-box-open fa-2x mb-2"></i>
+                                                    <p>No components found</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pending Requests Tab -->
+                <div class="tab-pane fade" id="requests" role="tabpanel" aria-labelledby="requests-tab">
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">Pending Requests</h6>
+                            <div class="d-flex flex-wrap gap-2 mt-2">
+                                <div class="input-group">
+                                    <input class="form-control form-control-sm" type="search" id="pendingSearchInput" placeholder="Search pending requests...">
+                                    <button class="btn btn-outline-primary btn-sm" type="button">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Component</th>
+                                            <th>Requested By</th>
+                                            <th>Quantity</th>
+                                            <th>Request Date</th>
+                                            <th>Notes</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for request in pending_requests %}
+                                        <tr>
+                                            <td>{{ request.component.name }}</td>
+                                            <td>{{ request.student.username }}</td>
+                                            <td>{{ request.quantity }}</td>
+                                            <td>{{ request.request_date|date:"F j, Y, g:i a" }}</td>
+                                            <td>{{ request.notes|default:"-" }}</td>
+                                            <td>
+                                                <a href="{% url 'update_request' request.pk %}" class="btn btn-primary btn-sm">
+                                                    <i class="fas fa-check me-1"></i>Process
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="6" class="text-center py-4">
+                                                <div class="text-muted">
+                                                    <i class="fas fa-inbox fa-2x mb-2"></i>
+                                                    <p>No pending requests</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Issued Components Tab -->
+                <div class="tab-pane fade" id="issued" role="tabpanel" aria-labelledby="issued-tab">
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                            <h6 class="m-0 font-weight-bold text-primary">Currently Issued Components</h6>
+                            <div class="d-flex flex-wrap gap-2">
+                                <div class="input-group">
+                                    <input class="form-control form-control-sm" type="search" id="issuedSearchInput" placeholder="Search issued components..." value="{{ issued_search_query }}">
+                                    <button class="btn btn-outline-primary btn-sm" type="button">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Component</th>
+                                            <th>Issued To</th>
+                                            <th>Quantity</th>
+                                            <th>Issue Date</th>
+                                            <th>Return Deadline</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for request in issued_requests %}
+                                        <tr>
+                                            <td>{{ request.component.name }}</td>
+                                            <td>{{ request.student.username }}</td>
+                                            <td>{{ request.quantity }}</td>
+                                            <td>{{ request.issue_date|date:"F j, Y, g:i a" }}</td>
+                                            <td class="{% if request.is_overdue %}text-danger{% endif %}">
+                                                {{ request.return_deadline|date:"F j, Y, g:i a" }}
+                                                {% if request.is_overdue %}
+                                                    <span class="badge bg-danger">Overdue</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <span class="badge {% if request.status == 'approved' %}bg-success{% elif request.status == 'pending' %}bg-warning{% elif request.status == 'rejected' %}bg-danger{% else %}bg-info{% endif %}">
+                                                    {{ request.status|title }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <a href="{% url 'update_request' request.pk %}" class="btn btn-primary btn-sm">
+                                                    <i class="fas fa-edit me-1"></i>Update
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="7" class="text-center py-4">
+                                                <div class="text-muted">
+                                                    <i class="fas fa-box fa-2x mb-2"></i>
+                                                    <p>No components currently issued</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Management Tab -->
+                <div class="tab-pane fade" id="users" role="tabpanel" aria-labelledby="users-tab">
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                            <h6 class="m-0 font-weight-bold text-primary">User Management</h6>
+                            <div class="d-flex flex-wrap gap-2">
+                                <a href="{% url 'admin:auth_user_add' %}" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-user-plus me-1"></i>Add New User
+                                </a>
+                                <div class="input-group">
+                                    <input class="form-control form-control-sm" type="search" id="usersSearchInput" placeholder="Search users..." value="{{ user_search_query }}">
+                                    <button class="btn btn-outline-primary btn-sm" type="button">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Username</th>
+                                            <th>Email</th>
+                                            <th>Name</th>
+                                            <th>Status</th>
+                                            <th>Last Login</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for user in users %}
+                                        <tr>
+                                            <td>{{ user.username }}</td>
+                                            <td>{{ user.email }}</td>
+                                            <td>{{ user.get_full_name|default:"-" }}</td>
+                                            <td>
+                                                {% if user.is_active %}
+                                                    <span class="badge bg-success">Active</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">Inactive</span>
+                                                {% endif %}
+                                                {% if user.is_staff %}
+                                                    <span class="badge bg-info">Staff</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ user.last_login|date:"F j, Y, g:i a"|default:"Never" }}</td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <a href="{% url 'admin:auth_user_change' user.id %}" class="btn btn-primary">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    {% if not user.is_superuser %}
+                                                        <a href="{% url 'admin:auth_user_delete' user.id %}" class="btn btn-danger">
+                                                            <i class="fas fa-trash"></i>
+                                                        </a>
+                                                    {% endif %}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="6" class="text-center py-4">
+                                                <div class="text-muted">
+                                                    <i class="fas fa-users fa-2x mb-2"></i>
+                                                    <p>No users found</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+<style>
+/* Custom styles for better responsiveness and professional look */
+.container-fluid {
+    padding: 1.5rem;
+}
+
+.card {
+    border: none;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+}
+
+.card-header {
+    background-color: #f8f9fc;
+    border-bottom: 1px solid #e3e6f0;
+}
+
+.nav-tabs {
+    border-bottom: 1px solid #e3e6f0;
+}
+
+.nav-tabs .nav-link {
+    border: none;
+    color: #6e707e;
+    padding: 0.75rem 1rem;
+    font-weight: 500;
+}
+
+.nav-tabs .nav-link.active {
+    color: #4e73df;
+    border-bottom: 2px solid #4e73df;
+    background: none;
+}
+
+.table {
+    margin-bottom: 0;
+}
+
+.table th {
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.05em;
+}
+
+.btn-group-sm > .btn {
+    padding: 0.25rem 0.5rem;
+}
+
+.badge {
+    font-weight: 500;
+    padding: 0.35em 0.65em;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .card-header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .d-flex {
+        flex-wrap: wrap;
+    }
+    
+    .table-responsive {
+        margin: 0 -1rem;
+    }
+    
+    .btn-group-sm {
+        display: flex;
+        gap: 0.25rem;
+    }
+}
+
+/* Empty state styling */
+.text-muted {
+    color: #858796 !important;
+}
+
+.text-muted i {
+    color: #dddfeb;
+}
+
+/* Hover effects */
+.table-hover tbody tr:hover {
+    background-color: #f8f9fc;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+/* Status badge colors */
+.badge.bg-success {
+    background-color: #1cc88a !important;
+}
+
+.badge.bg-warning {
+    background-color: #f6c23e !important;
+}
+
+.badge.bg-danger {
+    background-color: #e74a3b !important;
+}
+
+.badge.bg-info {
+    background-color: #36b9cc !important;
+}
+
+/* Table cell padding */
+.table td {
+    padding: 0.75rem;
+    vertical-align: middle;
+}
+
+/* Button styles */
+.btn-primary {
+    background-color: #4e73df;
+    border-color: #4e73df;
+}
+
+.btn-primary:hover {
+    background-color: #2e59d9;
+    border-color: #2653d4;
+}
+
+.btn-secondary {
+    background-color: #858796;
+    border-color: #858796;
+}
+
+.btn-secondary:hover {
+    background-color: #717384;
+    border-color: #6b6d7d;
+}
+
+.btn-success {
+    background-color: #1cc88a;
+    border-color: #1cc88a;
+}
+
+.btn-success:hover {
+    background-color: #17a673;
+    border-color: #169b6b;
+}
+
+/* Add styles for the quick action cards */
+.card {
+    border: none;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+.card-title {
+    margin-bottom: 0;
+    color: #5a5c69;
+}
+</style>
+
+<!-- Add this before the closing </body> tag -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Components Tab Search
+    const componentsSearchInput = document.getElementById('componentsSearchInput');
+    const componentsTable = document.querySelector('#components .table tbody');
+    const componentsRows = componentsTable.getElementsByTagName('tr');
+
+    componentsSearchInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+
+        for (let row of componentsRows) {
+            if (row.classList.contains('text-center')) continue;
+
+            const name = row.cells[0].textContent.toLowerCase();
+            const description = row.cells[1].textContent.toLowerCase();
+            const quantity = row.cells[2].textContent.toLowerCase();
+            const status = row.cells[3].textContent.toLowerCase();
+
+            const matches = name.includes(searchTerm) ||
+                          description.includes(searchTerm) ||
+                          quantity.includes(searchTerm) ||
+                          status.includes(searchTerm);
+
+            row.style.display = matches ? '' : 'none';
+        }
+
+        const noComponentsRow = componentsTable.querySelector('.text-center');
+        if (noComponentsRow) {
+            const hasVisibleRows = Array.from(componentsRows).some(row => row.style.display !== 'none');
+            noComponentsRow.style.display = hasVisibleRows ? 'none' : '';
+        }
+    });
+
+    // Pending Requests Tab Search
+    const pendingSearchInput = document.getElementById('pendingSearchInput');
+    const pendingTable = document.querySelector('#requests .table tbody');
+    const pendingRows = pendingTable.getElementsByTagName('tr');
+
+    pendingSearchInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+
+        for (let row of pendingRows) {
+            if (row.classList.contains('text-center')) continue;
+
+            const component = row.cells[0].textContent.toLowerCase();
+            const requestedBy = row.cells[1].textContent.toLowerCase();
+            const quantity = row.cells[2].textContent.toLowerCase();
+            const requestDate = row.cells[3].textContent.toLowerCase();
+            const notes = row.cells[4].textContent.toLowerCase();
+
+            const matches = component.includes(searchTerm) ||
+                          requestedBy.includes(searchTerm) ||
+                          quantity.includes(searchTerm) ||
+                          requestDate.includes(searchTerm) ||
+                          notes.includes(searchTerm);
+
+            row.style.display = matches ? '' : 'none';
+        }
+
+        const noPendingRow = pendingTable.querySelector('.text-center');
+        if (noPendingRow) {
+            const hasVisibleRows = Array.from(pendingRows).some(row => row.style.display !== 'none');
+            noPendingRow.style.display = hasVisibleRows ? 'none' : '';
+        }
+    });
+
+    // Users Tab Search
+    const usersSearchInput = document.getElementById('usersSearchInput');
+    const usersTable = document.querySelector('#users .table tbody');
+    const usersRows = usersTable.getElementsByTagName('tr');
+
+    usersSearchInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+
+        for (let row of usersRows) {
+            if (row.classList.contains('text-center')) continue;
+
+            const username = row.cells[0].textContent.toLowerCase();
+            const email = row.cells[1].textContent.toLowerCase();
+            const name = row.cells[2].textContent.toLowerCase();
+            const status = row.cells[3].textContent.toLowerCase();
+            const lastLogin = row.cells[4].textContent.toLowerCase();
+
+            const matches = username.includes(searchTerm) ||
+                          email.includes(searchTerm) ||
+                          name.includes(searchTerm) ||
+                          status.includes(searchTerm) ||
+                          lastLogin.includes(searchTerm);
+
+            row.style.display = matches ? '' : 'none';
+        }
+
+        const noUsersRow = usersTable.querySelector('.text-center');
+        if (noUsersRow) {
+            const hasVisibleRows = Array.from(usersRows).some(row => row.style.display !== 'none');
+            noUsersRow.style.display = hasVisibleRows ? 'none' : '';
+        }
+    });
+});
+</script>
+{% endblock %}
+ 

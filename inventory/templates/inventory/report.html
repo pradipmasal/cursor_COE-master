@@ -1,0 +1,352 @@
+{% extends 'inventory/base.html' %}
+{% load custom_filters %}
+
+{% block title %}Inventory Report{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Inventory Report</h6>
+                    <div class="d-flex gap-2">
+                        <a href="?export=pdf{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}" class="btn btn-danger btn-sm">
+                            <i class="fas fa-file-pdf me-1"></i>Export PDF
+                        </a>
+                        <a href="?export=excel{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}" class="btn btn-success btn-sm">
+                            <i class="fas fa-file-excel me-1"></i>Export Excel
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Search and Filter Form -->
+                    
+
+                    <!-- Statistics Cards -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title">Total Components</h5>
+                                    <p class="card-text display-6">{{ components|length }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title">Total Requests</h5>
+                                    <p class="card-text display-6">{{ total_requests }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title">Pending Requests</h5>
+                                    <p class="card-text display-6">{{ pending_requests }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title">Approved Requests</h5>
+                                    <p class="card-text display-6">{{ approved_requests }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Component Details Table -->
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3>Component Details</h3>
+                        <div class="d-flex align-items-center gap-2">
+                            <label for="componentRowsPerPage" class="mb-0 me-2">Show</label>
+                            <select id="componentRowsPerPage" class="form-select form-select-sm" style="width: auto;">
+                                <option value="10">10</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                                <option value="all">All</option>
+                            </select>
+                            <span class="ms-2">entries</span>
+                        </div>
+                        <div class="input-group" style="width: 300px;">
+                            <input type="text" id="componentSearch" class="form-control" placeholder="Search components...">
+                            <span class="input-group-text">
+                                <i class="fas fa-search"></i>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped" id="componentsTable">
+                            <thead>
+                                <tr>
+                                    <th>Component Name</th>
+                                    <th>Description</th>
+                                    <th>Issued/Total</th>
+                                    <th>Status</th>
+                                    <th>Barcode</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for component in components %}
+                                <tr>
+                                    <td>{{ component.name }}</td>
+                                    <td>{{ component.description }}</td>
+                                    <td>{{ component_stats|get_item:component.id|get_item:'issued' }}/{{ component_stats|get_item:component.id|get_item:'total' }}</td>
+                                    <td>
+                                        {% if component.available %}
+                                        <span class="badge bg-success">Available</span>
+                                        {% else %}
+                                        <span class="badge bg-danger">Unavailable</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if component.barcode %}
+                                            <img src="{% url 'generate_barcode' component.id %}" alt="Barcode" style="height: 40px; width: 100px;">
+                                        {% else %}
+                                            <span class="text-muted">No barcode</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center">No components found</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        <div id="componentsPagination" class="mt-2"></div>
+                    </div>
+
+                    <!-- Request Details Table -->
+                    <div class="d-flex justify-content-between align-items-center mb-3 mt-4">
+                        <h3>Request Details</h3>
+                        <div class="d-flex align-items-center gap-2">
+                            <label for="requestRowsPerPage" class="mb-0 me-2">Show</label>
+                            <select id="requestRowsPerPage" class="form-select form-select-sm" style="width: auto;">
+                                <option value="10">10</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                                <option value="all">All</option>
+                            </select>
+                            <span class="ms-2">entries</span>
+                        </div>
+                        <div class="input-group" style="width: 300px;">
+                            <input type="text" id="requestSearch" class="form-control" placeholder="Search requests...">
+                            <span class="input-group-text">
+                                <i class="fas fa-search"></i>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped" id="requestsTable">
+                            <thead>
+                                <tr>
+                                    <th>Component</th>
+                                    <th>Requested By</th>
+                                    <th>Quantity</th>
+                                    <th>Status</th>
+                                    <th>Request Date</th>
+                                    <th>Issue Date</th>
+                                    <th>Return Deadline</th>
+                                    <th>Return Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for request in requests %}
+                                <tr>
+                                    <td>{{ request.component.name }}</td>
+                                    <td>{{ request.student.username }}</td>
+                                    <td>{{ request.quantity }}</td>
+                                    <td>
+                                        <span class="badge {% if request.status == 'approved' %}bg-success{% elif request.status == 'pending' %}bg-warning{% elif request.status == 'rejected' %}bg-danger{% else %}bg-info{% endif %}">
+                                            {{ request.status|title }}
+                                        </span>
+                                    </td>
+                                    <td>{{ request.request_date|date:"F j, Y, g:i a" }}</td>
+                                    <td>{{ request.issue_date|date:"F j, Y, g:i a"|default:"-" }}</td>
+                                    <td class="{% if request.is_overdue %}text-danger{% endif %}">
+                                        {{ request.return_deadline|date:"F j, Y, g:i a"|default:"-" }}
+                                        {% if request.is_overdue %}
+                                            <span class="badge bg-danger">Overdue</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ request.return_date|date:"F j, Y, g:i a"|default:"-" }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="8" class="text-center">No requests found</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        <div id="requestsPagination" class="mt-2"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // --- COMPONENTS TABLE PAGINATION ---
+    const componentSearch = document.getElementById('componentSearch');
+    const componentsTable = document.getElementById('componentsTable');
+    const componentRows = Array.from(componentsTable.getElementsByTagName('tr')).slice(1); // skip header
+    const componentRowsPerPageSelect = document.getElementById('componentRowsPerPage');
+    const componentsPagination = document.getElementById('componentsPagination');
+
+    let componentCurrentPage = 1;
+    let componentRowsPerPage = parseInt(componentRowsPerPageSelect.value);
+
+    function getFilteredComponentRows() {
+        const searchTerm = componentSearch.value.toLowerCase();
+        return componentRows.filter(row => {
+            if (row.classList.contains('text-center')) return false;
+            const name = row.cells[0].textContent.toLowerCase();
+            const description = row.cells[1].textContent.toLowerCase();
+            const quantity = row.cells[2].textContent.toLowerCase();
+            const status = row.cells[3].textContent.toLowerCase();
+            return name.includes(searchTerm) || description.includes(searchTerm) || quantity.includes(searchTerm) || status.includes(searchTerm);
+        });
+    }
+
+    function renderComponentTable() {
+        const filteredRows = getFilteredComponentRows();
+        let rowsPerPage = componentRowsPerPage === 'all' ? filteredRows.length : componentRowsPerPage;
+        if (componentRowsPerPage === 'all') rowsPerPage = filteredRows.length;
+        const totalPages = Math.ceil(filteredRows.length / rowsPerPage) || 1;
+        if (componentCurrentPage > totalPages) componentCurrentPage = totalPages;
+        const start = (componentCurrentPage - 1) * rowsPerPage;
+        const end = start + rowsPerPage;
+        componentRows.forEach(row => row.style.display = 'none');
+        filteredRows.slice(start, end).forEach(row => row.style.display = '');
+        // Show/hide "No components" message
+        const noComponentsRow = componentsTable.querySelector('.text-center');
+        if (noComponentsRow) {
+            noComponentsRow.style.display = filteredRows.length === 0 ? '' : 'none';
+        }
+        renderComponentPagination(totalPages);
+    }
+
+    function renderComponentPagination(totalPages) {
+        if (componentRowsPerPage === 'all' || totalPages <= 1) {
+            componentsPagination.innerHTML = '';
+            return;
+        }
+        let html = '<nav><ul class="pagination pagination-sm">';
+        html += `<li class="page-item${componentCurrentPage === 1 ? ' disabled' : ''}"><a class="page-link" href="#" data-page="prev">Previous</a></li>`;
+        for (let i = 1; i <= totalPages; i++) {
+            html += `<li class="page-item${componentCurrentPage === i ? ' active' : ''}"><a class="page-link" href="#" data-page="${i}">${i}</a></li>`;
+        }
+        html += `<li class="page-item${componentCurrentPage === totalPages ? ' disabled' : ''}"><a class="page-link" href="#" data-page="next">Next</a></li>`;
+        html += '</ul></nav>';
+        componentsPagination.innerHTML = html;
+        componentsPagination.querySelectorAll('a.page-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                let page = this.getAttribute('data-page');
+                if (page === 'prev' && componentCurrentPage > 1) componentCurrentPage--;
+                else if (page === 'next' && componentCurrentPage < totalPages) componentCurrentPage++;
+                else if (!isNaN(page)) componentCurrentPage = parseInt(page);
+                renderComponentTable();
+            });
+        });
+    }
+
+    componentSearch.addEventListener('input', function() {
+        componentCurrentPage = 1;
+        renderComponentTable();
+    });
+    componentRowsPerPageSelect.addEventListener('change', function() {
+        componentRowsPerPage = this.value === 'all' ? 'all' : parseInt(this.value);
+        componentCurrentPage = 1;
+        renderComponentTable();
+    });
+    renderComponentTable();
+
+    // --- REQUESTS TABLE PAGINATION ---
+    const requestSearch = document.getElementById('requestSearch');
+    const requestsTable = document.getElementById('requestsTable');
+    const requestRows = Array.from(requestsTable.getElementsByTagName('tr')).slice(1); // skip header
+    const requestRowsPerPageSelect = document.getElementById('requestRowsPerPage');
+    const requestsPagination = document.getElementById('requestsPagination');
+
+    let requestCurrentPage = 1;
+    let requestRowsPerPage = parseInt(requestRowsPerPageSelect.value);
+
+    function getFilteredRequestRows() {
+        const searchTerm = requestSearch.value.toLowerCase();
+        return requestRows.filter(row => {
+            if (row.classList.contains('text-center')) return false;
+            const component = row.cells[0].textContent.toLowerCase();
+            const requestedBy = row.cells[1].textContent.toLowerCase();
+            const quantity = row.cells[2].textContent.toLowerCase();
+            const status = row.cells[3].textContent.toLowerCase();
+            return component.includes(searchTerm) || requestedBy.includes(searchTerm) || quantity.includes(searchTerm) || status.includes(searchTerm);
+        });
+    }
+
+    function renderRequestTable() {
+        const filteredRows = getFilteredRequestRows();
+        let rowsPerPage = requestRowsPerPage === 'all' ? filteredRows.length : requestRowsPerPage;
+        if (requestRowsPerPage === 'all') rowsPerPage = filteredRows.length;
+        const totalPages = Math.ceil(filteredRows.length / rowsPerPage) || 1;
+        if (requestCurrentPage > totalPages) requestCurrentPage = totalPages;
+        const start = (requestCurrentPage - 1) * rowsPerPage;
+        const end = start + rowsPerPage;
+        requestRows.forEach(row => row.style.display = 'none');
+        filteredRows.slice(start, end).forEach(row => row.style.display = '');
+        // Show/hide "No requests" message
+        const noRequestsRow = requestsTable.querySelector('.text-center');
+        if (noRequestsRow) {
+            noRequestsRow.style.display = filteredRows.length === 0 ? '' : 'none';
+        }
+        renderRequestPagination(totalPages);
+    }
+
+    function renderRequestPagination(totalPages) {
+        if (requestRowsPerPage === 'all' || totalPages <= 1) {
+            requestsPagination.innerHTML = '';
+            return;
+        }
+        let html = '<nav><ul class="pagination pagination-sm">';
+        html += `<li class="page-item${requestCurrentPage === 1 ? ' disabled' : ''}"><a class="page-link" href="#" data-page="prev">Previous</a></li>`;
+        for (let i = 1; i <= totalPages; i++) {
+            html += `<li class="page-item${requestCurrentPage === i ? ' active' : ''}"><a class="page-link" href="#" data-page="${i}">${i}</a></li>`;
+        }
+        html += `<li class="page-item${requestCurrentPage === totalPages ? ' disabled' : ''}"><a class="page-link" href="#" data-page="next">Next</a></li>`;
+        html += '</ul></nav>';
+        requestsPagination.innerHTML = html;
+        requestsPagination.querySelectorAll('a.page-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                let page = this.getAttribute('data-page');
+                if (page === 'prev' && requestCurrentPage > 1) requestCurrentPage--;
+                else if (page === 'next' && requestCurrentPage < totalPages) requestCurrentPage++;
+                else if (!isNaN(page)) requestCurrentPage = parseInt(page);
+                renderRequestTable();
+            });
+        });
+    }
+
+    requestSearch.addEventListener('input', function() {
+        requestCurrentPage = 1;
+        renderRequestTable();
+    });
+    requestRowsPerPageSelect.addEventListener('change', function() {
+        requestRowsPerPage = this.value === 'all' ? 'all' : parseInt(this.value);
+        requestCurrentPage = 1;
+        renderRequestTable();
+    });
+    renderRequestTable();
+});
+</script>
+{% endblock %}
+ 

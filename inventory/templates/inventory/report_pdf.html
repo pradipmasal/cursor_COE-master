@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Inventory Report</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 2cm;
+        }
+        h1 {
+            color: #4e73df;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #5a5c69;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #4e73df;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f8f9fc;
+        }
+        .stats-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+        .stat-box {
+            background-color: #4e73df;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            width: 23%;
+            text-align: center;
+        }
+        .stat-box h3 {
+            margin: 0;
+            font-size: 14px;
+        }
+        .stat-box p {
+            margin: 5px 0 0;
+            font-size: 24px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Inventory Report</h1>
+    
+    <!-- Statistics -->
+    <div class="stats-container">
+        <div class="stat-box">
+            <h3>Total Components</h3>
+            <p>{{ components|length }}</p>
+        </div>
+        <div class="stat-box">
+            <h3>Total Requests</h3>
+            <p>{{ total_requests }}</p>
+        </div>
+        <div class="stat-box">
+            <h3>Pending Requests</h3>
+            <p>{{ pending_requests }}</p>
+        </div>
+        <div class="stat-box">
+            <h3>Approved Requests</h3>
+            <p>{{ approved_requests }}</p>
+        </div>
+    </div>
+
+    <!-- Component Details -->
+    <h2>Component Details</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Component Name</th>
+                <th>Description</th>
+                <th>Quantity</th>
+                <th>Status</th>
+                <th>Total Requests</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for component in components %}
+            <tr>
+                <td>{{ component.name }}</td>
+                <td>{{ component.description }}</td>
+                <td>{{ component.quantity }}</td>
+                <td>{% if component.available %}Available{% else %}Unavailable{% endif %}</td>
+                <td>{{ component.issuerequest_set.count }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Request Details -->
+    <h2>Request Details</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Component</th>
+                <th>Requested By</th>
+                <th>Quantity</th>
+                <th>Status</th>
+                <th>Request Date</th>
+                <th>Issue Date</th>
+                <th>Return Deadline</th>
+                <th>Return Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for request in requests %}
+            <tr>
+                <td>{{ request.component.name }}</td>
+                <td>{{ request.student.username }}</td>
+                <td>{{ request.quantity }}</td>
+                <td>{{ request.status|title }}</td>
+                <td>{{ request.request_date|date:"F j, Y, g:i a" }}</td>
+                <td>{{ request.issue_date|date:"F j, Y, g:i a"|default:"-" }}</td>
+                <td>{{ request.return_deadline|date:"F j, Y, g:i a"|default:"-" }}</td>
+                <td>{{ request.return_date|date:"F j, Y, g:i a"|default:"-" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html> 

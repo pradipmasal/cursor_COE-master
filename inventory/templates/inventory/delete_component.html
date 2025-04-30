@@ -1,0 +1,35 @@
+{% extends 'inventory/base.html' %} {% block title %}Delete Component{% endblock%} 
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="text-center">Delete Component</h3>
+      </div>
+      <div class="card-body">
+        <p>Are you sure you want to delete the following component?</p>
+        <div class="card mb-3">
+          <div class="card-body">
+            <h5 class="card-title">{{ component.name }}</h5>
+            <p class="card-text">{{ component.description }}</p>
+            <p class="card-text">
+              <small class="text-muted">
+                Quantity: {{ component.quantity }}
+              </small>
+            </p>
+          </div>
+        </div>
+        <form method="post">
+          {% csrf_token %}
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-danger">
+              Delete Component
+            </button>
+            <a href="{% url 'home' %}" class="btn btn-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

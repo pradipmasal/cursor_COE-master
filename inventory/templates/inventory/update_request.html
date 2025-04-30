@@ -1,0 +1,194 @@
+{% extends 'inventory/base.html' %}
+
+{% block title %}Update Request{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-8 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Update Request</h6>
+                </div>
+                <div class="card-body">
+                    <div class="request-info mb-4">
+                        <h5 class="mb-3">Request Details</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p class="mb-2"><strong>Component:</strong> {{ issue_request.component.name }}</p>
+                                <p class="mb-2"><strong>Requested By:</strong> {{ issue_request.student.username }}</p>
+                                <p class="mb-2"><strong>Quantity:</strong> {{ issue_request.quantity }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-2"><strong>Request Date:</strong> {{ issue_request.request_date|date:"F j, Y, g:i a" }}</p>
+                                <p class="mb-2"><strong>Current Status:</strong> 
+                                    <span class="badge {% if issue_request.status == 'approved' %}bg-success{% elif issue_request.status == 'pending' %}bg-warning{% elif issue_request.status == 'rejected' %}bg-danger{% else %}bg-info{% endif %}">
+                                        {{ issue_request.status|title }}
+                                    </span>
+                                </p>
+                                {% if issue_request.notes %}
+                                    <p class="mb-2"><strong>Notes:</strong> {{ issue_request.notes }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="{{ form.status.id_for_label }}" class="form-label">Update Status</label>
+                            <select name="{{ form.status.name }}" id="{{ form.status.id_for_label }}" 
+                                    class="form-select {% if form.status.errors %}is-invalid{% endif %}" 
+                                    onchange="toggleRejectionReason(this.value)">
+                                {% for value, label in form.status.field.choices %}
+                                    <option value="{{ value }}" {% if form.status.value == value %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            {% if form.status.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.status.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3" id="rejectionReasonDiv" style="display: none;">
+                            <label for="{{ form.rejection_reason.id_for_label }}" class="form-label">Rejection Reason</label>
+                            <textarea name="{{ form.rejection_reason.name }}" id="{{ form.rejection_reason.id_for_label }}" 
+                                      class="form-control {% if form.rejection_reason.errors %}is-invalid{% endif %}" 
+                                      rows="3" placeholder="Please provide a reason for rejection...">{{ form.rejection_reason.value|default:'' }}</textarea>
+                            {% if form.rejection_reason.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.rejection_reason.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a href="{% url 'home' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Back
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>Update Request
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+<style>
+/* Custom styles for better responsiveness and professional look */
+.container-fluid {
+    padding: 1.5rem;
+}
+
+.card {
+    border: none;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+}
+
+.card-header {
+    background-color: #f8f9fc;
+    border-bottom: 1px solid #e3e6f0;
+}
+
+.form-label {
+    font-weight: 500;
+    color: #5a5c69;
+}
+
+.badge {
+    font-weight: 500;
+    padding: 0.35em 0.65em;
+}
+
+.badge.bg-success {
+    background-color: #1cc88a !important;
+}
+
+.badge.bg-warning {
+    background-color: #f6c23e !important;
+}
+
+.badge.bg-danger {
+    background-color: #e74a3b !important;
+}
+
+.badge.bg-info {
+    background-color: #36b9cc !important;
+}
+
+/* Button styles */
+.btn-primary {
+    background-color: #4e73df;
+    border-color: #4e73df;
+}
+
+.btn-primary:hover {
+    background-color: #2e59d9;
+    border-color: #2653d4;
+}
+
+.btn-secondary {
+    background-color: #858796;
+    border-color: #858796;
+}
+
+.btn-secondary:hover {
+    background-color: #717384;
+    border-color: #6b6d7d;
+}
+
+/* Hover effects */
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .container-fluid {
+        padding: 1rem;
+    }
+    
+    .card {
+        margin: 0 -0.5rem;
+    }
+    
+    .d-flex {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+}
+</style>
+
+<script>
+function toggleRejectionReason(status) {
+    const rejectionReasonDiv = document.getElementById('rejectionReasonDiv');
+    const rejectionReasonInput = document.getElementById('{{ form.rejection_reason.id_for_label }}');
+    
+    if (status === 'rejected') {
+        rejectionReasonDiv.style.display = 'block';
+        rejectionReasonInput.setAttribute('required', 'required');
+    } else {
+        rejectionReasonDiv.style.display = 'none';
+        rejectionReasonInput.removeAttribute('required');
+        rejectionReasonInput.value = '';
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const statusSelect = document.getElementById('{{ form.status.id_for_label }}');
+    toggleRejectionReason(statusSelect.value);
+});
+</script>
+{% endblock %} 

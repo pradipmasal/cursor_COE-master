@@ -1,0 +1,556 @@
+{% extends 'inventory/base.html' %}
+
+{% block title %}Direct Issue Component{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-8 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Direct Issue Component</h6>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="directIssueForm">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="student_search" class="form-label">Search Student</label>
+                            <div class="input-group">
+                                <input type="text" id="student_search" class="form-control" placeholder="Search by username or email...">
+                                <button class="btn btn-outline-secondary" type="button" id="student_search_btn">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                            <div id="student_results" class="list-group mt-2" style="max-height: 200px; overflow-y: auto; display: none;"></div>
+                            <input type="hidden" name="student" id="selected_student" required>
+                            {% if form.student.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.student.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="bulk_issue" name="bulk_issue">
+                                <label class="form-check-label" for="bulk_issue">
+                                    Bulk Issue (Issue multiple components)
+                                </label>
+                            </div>
+                        </div>
+
+                        <div id="bulk_issue_section" style="display: none;">
+                            <div class="mb-3">
+                                <label for="bulk_components" class="form-label">Selected Components</label>
+                                <div id="selected_components_list" class="list-group mb-2"></div>
+                                <div class="input-group">
+                                    <input type="text" id="bulk_component_search" class="form-control" placeholder="Search or scan barcode...">
+                                    <button class="btn btn-outline-secondary" type="button" id="bulk_component_search_btn">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                                <div id="bulk_component_results" class="list-group mt-2" style="max-height: 200px; overflow-y: auto; display: none;"></div>
+                            </div>
+                        </div>
+
+                        <div id="single_component_section">
+                            <div class="mb-3">
+                                <label for="component_search" class="form-label">Search Component</label>
+                                <div class="input-group">
+                                    <input type="text" id="component_search" class="form-control" placeholder="Search or scan barcode...">
+                                    <button class="btn btn-outline-secondary" type="button" id="component_search_btn">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                                <div id="component_results" class="list-group mt-2" style="max-height: 200px; overflow-y: auto; display: none;"></div>
+                                <input type="hidden" name="component" id="selected_component">
+                                {% if form.component.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.component.errors|join:", " }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="quantity" class="form-label">Quantity</label>
+                                <input type="number" name="quantity" id="quantity" class="form-control {% if form.quantity.errors %}is-invalid{% endif %}" 
+                                       min="1" value="{{ form.quantity.value|default:1 }}">
+                                {% if form.quantity.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ form.quantity.errors|join:", " }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="return_deadline" class="form-label">Return Deadline</label>
+                            <input type="date" name="return_deadline" id="return_deadline" class="form-control {% if form.return_deadline.errors %}is-invalid{% endif %}" 
+                                   value="{{ form.return_deadline.value|date:'Y-m-d' }}" required>
+                            {% if form.return_deadline.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.return_deadline.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">Notes (Optional)</label>
+                            <textarea name="notes" id="notes" class="form-control {% if form.notes.errors %}is-invalid{% endif %}" 
+                                      rows="3">{{ form.notes.value|default:'' }}</textarea>
+                            {% if form.notes.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.notes.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a href="{% url 'home' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Back
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-check me-1"></i>Issue Component
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+<style>
+/* Custom styles for better responsiveness and professional look */
+.container-fluid {
+    padding: 1.5rem;
+}
+
+.card {
+    border: none;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+}
+
+.card-header {
+    background-color: #f8f9fc;
+    border-bottom: 1px solid #e3e6f0;
+}
+
+.form-label {
+    font-weight: 500;
+    color: #5a5c69;
+}
+
+/* Button styles */
+.btn-primary {
+    background-color: #4e73df;
+    border-color: #4e73df;
+}
+
+.btn-primary:hover {
+    background-color: #2e59d9;
+    border-color: #2653d4;
+}
+
+.btn-secondary {
+    background-color: #858796;
+    border-color: #858796;
+}
+
+.btn-secondary:hover {
+    background-color: #717384;
+    border-color: #6b6d7d;
+}
+
+/* Hover effects */
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .container-fluid {
+        padding: 1rem;
+    }
+    
+    .card {
+        margin: 0 -0.5rem;
+    }
+    
+    .d-flex {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+}
+
+/* Search results styling */
+.list-group-item {
+    cursor: pointer;
+    border-left: none;
+    border-right: none;
+}
+
+.list-group-item:first-child {
+    border-top: none;
+}
+
+.list-group-item:last-child {
+    border-bottom: none;
+}
+
+.list-group-item:hover {
+    background-color: #f8f9fc;
+}
+
+.selected-component-item {
+    background-color: #e3e6f0;
+    border-radius: 0.25rem;
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.selected-component-item .remove-selection {
+    color: #e74a3b;
+    cursor: pointer;
+}
+
+.selected-component-item .remove-selection:hover {
+    color: #be2617;
+}
+
+/* Selected item in search input */
+.search-input-selected {
+    background-color: #e3e6f0;
+    color: #4e73df;
+    font-weight: 500;
+}
+
+.component-quantity {
+    width: 80px;
+    margin-left: 10px;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set default return deadline to 7 days from now
+    const today = new Date();
+    const sevenDaysLater = new Date(today);
+    sevenDaysLater.setDate(today.getDate() + 7);
+    
+    const year = sevenDaysLater.getFullYear();
+    const month = String(sevenDaysLater.getMonth() + 1).padStart(2, '0');
+    const day = String(sevenDaysLater.getDate()).padStart(2, '0');
+    
+    const defaultDate = `${year}-${month}-${day}`;
+    
+    // Only set if the field is empty
+    if (!document.getElementById('return_deadline').value) {
+        document.getElementById('return_deadline').value = defaultDate;
+    }
+    
+    // Student search functionality
+    const studentSearch = document.getElementById('student_search');
+    const studentResults = document.getElementById('student_results');
+    const selectedStudent = document.getElementById('selected_student');
+    
+    // Component search functionality
+    const componentSearch = document.getElementById('component_search');
+    const componentResults = document.getElementById('component_results');
+    const selectedComponent = document.getElementById('selected_component');
+    const quantityInput = document.getElementById('quantity');
+    
+    // Bulk issue functionality
+    const bulkIssueCheckbox = document.getElementById('bulk_issue');
+    const bulkIssueSection = document.getElementById('bulk_issue_section');
+    const singleComponentSection = document.getElementById('single_component_section');
+    const bulkComponentSearch = document.getElementById('bulk_component_search');
+    const bulkComponentResults = document.getElementById('bulk_component_results');
+    const selectedComponentsList = document.getElementById('selected_components_list');
+    const selectedComponents = new Map(); // Map to store component ID -> quantity
+    
+    // Function to search students
+    function searchStudents(query) {
+        if (query.length < 2) {
+            studentResults.style.display = 'none';
+            return;
+        }
+        
+        fetch(`/search-students/?q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                studentResults.innerHTML = '';
+                if (data.length > 0) {
+                    data.forEach(student => {
+                        const item = document.createElement('a');
+                        item.href = '#';
+                        item.className = 'list-group-item list-group-item-action';
+                        item.innerHTML = `${student.username} (${student.email})`;
+                        item.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            selectStudent(student);
+                        });
+                        studentResults.appendChild(item);
+                    });
+                    studentResults.style.display = 'block';
+                } else {
+                    studentResults.style.display = 'none';
+                }
+            });
+    }
+    
+    // Function to search components
+    function searchComponents(query, resultsContainer, callback) {
+        if (query.length < 2) {
+            resultsContainer.style.display = 'none';
+            return;
+        }
+        
+        fetch(`/search-components/?q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                resultsContainer.innerHTML = '';
+                if (data.length > 0) {
+                    data.forEach(component => {
+                        const item = document.createElement('a');
+                        item.href = '#';
+                        item.className = 'list-group-item list-group-item-action';
+                        item.innerHTML = `${component.name} (Available: ${component.quantity})`;
+                        item.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            callback(component);
+                        });
+                        resultsContainer.appendChild(item);
+                    });
+                    resultsContainer.style.display = 'block';
+                } else {
+                    resultsContainer.style.display = 'none';
+                }
+            });
+    }
+    
+    // Function to select a student
+    function selectStudent(student) {
+        selectedStudent.value = student.id;
+        studentSearch.value = `${student.username} (${student.email})`;
+        studentSearch.classList.add('search-input-selected');
+        studentResults.style.display = 'none';
+    }
+    
+    // Function to select a component
+    function selectComponent(component) {
+        selectedComponent.value = component.id;
+        componentSearch.value = `${component.name} (Available: ${component.quantity})`;
+        componentSearch.classList.add('search-input-selected');
+        componentResults.style.display = 'none';
+        
+        // Update quantity max
+        quantityInput.max = component.quantity;
+        quantityInput.value = Math.min(parseInt(quantityInput.value) || 1, component.quantity);
+    }
+    
+    // Function to add component to bulk selection
+    function addBulkComponent(component) {
+        if (!selectedComponents.has(component.id)) {
+            selectedComponents.set(component.id, 1);
+            const item = document.createElement('div');
+            item.className = 'selected-component-item';
+            item.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <span>${component.name} (Available: ${component.quantity})</span>
+                    <input type="number" class="form-control form-control-sm component-quantity" 
+                           min="1" max="${component.quantity}" value="1" 
+                           onchange="updateComponentQuantity(${component.id}, this.value)">
+                </div>
+                <i class="fas fa-times remove-selection" onclick="removeBulkComponent(${component.id})"></i>
+            `;
+            selectedComponentsList.appendChild(item);
+        }
+        bulkComponentSearch.value = '';
+        bulkComponentResults.style.display = 'none';
+    }
+    
+    // Function to update component quantity
+    window.updateComponentQuantity = function(componentId, quantity) {
+        selectedComponents.set(componentId, parseInt(quantity));
+    };
+    
+    // Function to remove component from bulk selection
+    window.removeBulkComponent = function(componentId) {
+        selectedComponents.delete(componentId);
+        const items = selectedComponentsList.getElementsByClassName('selected-component-item');
+        for (let item of items) {
+            if (item.querySelector('span').textContent.includes(componentId)) {
+                item.remove();
+                break;
+            }
+        }
+    };
+    
+    // Event listeners for student search
+    studentSearch.addEventListener('input', function() {
+        if (!this.classList.contains('search-input-selected')) {
+            searchStudents(this.value);
+        }
+    });
+    
+    document.getElementById('student_search_btn').addEventListener('click', function() {
+        if (!studentSearch.classList.contains('search-input-selected')) {
+            searchStudents(studentSearch.value);
+        }
+    });
+    
+    // Event listeners for component search
+    componentSearch.addEventListener('input', function() {
+        if (!this.classList.contains('search-input-selected')) {
+            searchComponents(this.value, componentResults, selectComponent);
+        }
+    });
+    
+    document.getElementById('component_search_btn').addEventListener('click', function() {
+        if (!componentSearch.classList.contains('search-input-selected')) {
+            searchComponents(componentSearch.value, componentResults, selectComponent);
+        }
+    });
+    
+    // Event listeners for bulk component search
+    bulkComponentSearch.addEventListener('input', function() {
+        searchComponents(this.value, bulkComponentResults, addBulkComponent);
+    });
+    
+    document.getElementById('bulk_component_search_btn').addEventListener('click', function() {
+        searchComponents(bulkComponentSearch.value, bulkComponentResults, addBulkComponent);
+    });
+    
+    // Toggle bulk issue section
+    bulkIssueCheckbox.addEventListener('change', function() {
+        bulkIssueSection.style.display = this.checked ? 'block' : 'none';
+        singleComponentSection.style.display = this.checked ? 'none' : 'block';
+        if (this.checked) {
+            selectedComponent.value = '';
+            componentSearch.value = '';
+            componentSearch.classList.remove('search-input-selected');
+            quantityInput.value = '1';
+            quantityInput.max = '';
+        } else {
+            selectedComponents.clear();
+            selectedComponentsList.innerHTML = '';
+        }
+    });
+    
+    // Clear selection when clicking on search input
+    studentSearch.addEventListener('click', function() {
+        if (this.classList.contains('search-input-selected')) {
+            this.value = '';
+            this.classList.remove('search-input-selected');
+            selectedStudent.value = '';
+        }
+    });
+    
+    componentSearch.addEventListener('click', function() {
+        if (this.classList.contains('search-input-selected')) {
+            this.value = '';
+            this.classList.remove('search-input-selected');
+            selectedComponent.value = '';
+            quantityInput.max = '';
+        }
+    });
+    
+    // Close search results when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!studentSearch.contains(e.target) && !studentResults.contains(e.target)) {
+            studentResults.style.display = 'none';
+        }
+        if (!componentSearch.contains(e.target) && !componentResults.contains(e.target)) {
+            componentResults.style.display = 'none';
+        }
+        if (!bulkComponentSearch.contains(e.target) && !bulkComponentResults.contains(e.target)) {
+            bulkComponentResults.style.display = 'none';
+        }
+    });
+    
+    // Form validation
+    document.getElementById('directIssueForm').addEventListener('submit', function(e) {
+        if (!selectedStudent.value) {
+            e.preventDefault();
+            alert('Please select a student');
+            return;
+        }
+        
+        if (bulkIssueCheckbox.checked) {
+            if (selectedComponents.size === 0) {
+                e.preventDefault();
+                alert('Please select at least one component for bulk issue');
+                return;
+            }
+            // Add selected components to form data
+            selectedComponents.forEach((quantity, componentId) => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'bulk_components[]';
+                input.value = componentId;
+                this.appendChild(input);
+                
+                const quantityInput = document.createElement('input');
+                quantityInput.type = 'hidden';
+                quantityInput.name = 'bulk_quantities[]';
+                quantityInput.value = quantity;
+                this.appendChild(quantityInput);
+            });
+        } else {
+            if (!selectedComponent.value) {
+                e.preventDefault();
+                alert('Please select a component');
+                return;
+            }
+        }
+    });
+    
+    // Handle barcode scanning
+    function handleBarcodeInput(input, resultsContainer, callback) {
+        let barcodeBuffer = '';
+        let lastKeyTime = 0;
+        
+        input.addEventListener('keydown', function(e) {
+            const currentTime = new Date().getTime();
+            
+            // If it's been more than 100ms since the last keypress, clear the buffer
+            if (currentTime - lastKeyTime > 100) {
+                barcodeBuffer = '';
+            }
+            
+            lastKeyTime = currentTime;
+            
+            // If Enter is pressed, search for the barcode
+            if (e.key === 'Enter') {
+                e.preventDefault();
+        fetch(`/search-components/?q=${encodeURIComponent(barcodeBuffer)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.length > 0) {
+                            callback(data[0]);
+                        }
+                    });
+                barcodeBuffer = '';
+            } else {
+                // Add the character to the buffer
+                barcodeBuffer += e.key;
+            }
+        });
+    }
+    
+    // Initialize barcode scanning for both single and bulk component inputs
+    handleBarcodeInput(componentSearch, componentResults, selectComponent);
+    handleBarcodeInput(bulkComponentSearch, bulkComponentResults, addBulkComponent);
+});
+</script>
+{% endblock %} 
