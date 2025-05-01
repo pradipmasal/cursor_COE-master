@@ -826,10 +826,12 @@ def analytics_dashboard(request):
 def user_dashboard(request, user_id):
     user = get_object_or_404(User, id=user_id)
     my_requests = IssueRequest.objects.filter(student=user)
+    login_user = request.user
 
 
     context = {
         'user': user,
-        'my_requests': my_requests
+        'my_requests': my_requests,
+        'login_user': login_user
     }
     return render(request, 'inventory/user_dashboard.html', context)    
