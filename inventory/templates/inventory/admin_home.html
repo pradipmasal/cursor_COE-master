@@ -1,4 +1,5 @@
 {% extends 'inventory/base.html' %}
+{% load static %}
 
 {% block title %}Admin Dashboard{% endblock %}
 
@@ -361,13 +362,13 @@
                                 <div class="card-header py-3 d-flex justify-content-between align-items-center">
                                     <h6 class="m-0 font-weight-bold text-primary">Inventory Status</h6>
                                     <div class="dropdown">
-                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="inventoryFilter" data-bs-toggle="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="inventoryFilter" data-bs-toggle="dropdown" aria-expanded="false">
                                             <i class="fas fa-filter"></i>
                                         </button>
                                         <ul class="dropdown-menu">
-                                            <li><a class="dropdown-item" href="#" data-filter="all">All Time</a></li>
-                                            <li><a class="dropdown-item" href="#" data-filter="month">Last 30 Days</a></li>
-                                            <li><a class="dropdown-item" href="#" data-filter="week">Last 7 Days</a></li>
+                                            <li><a class="dropdown-item" href="#" data-filter="all" data-chart="inventory">All Time</a></li>
+                                            <li><a class="dropdown-item" href="#" data-filter="month" data-chart="inventory">Last 30 Days</a></li>
+                                            <li><a class="dropdown-item" href="#" data-filter="week" data-chart="inventory">Last 7 Days</a></li>
                                         </ul>
                                     </div>
                                 </div>
@@ -383,13 +384,13 @@
                                 <div class="card-header py-3 d-flex justify-content-between align-items-center">
                                     <h6 class="m-0 font-weight-bold text-primary">Request Status Distribution</h6>
                                     <div class="dropdown">
-                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="statusFilter" data-bs-toggle="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="statusFilter" data-bs-toggle="dropdown" aria-expanded="false">
                                             <i class="fas fa-filter"></i>
                                         </button>
                                         <ul class="dropdown-menu">
-                                            <li><a class="dropdown-item" href="#" data-filter="all">All Time</a></li>
-                                            <li><a class="dropdown-item" href="#" data-filter="month">Last 30 Days</a></li>
-                                            <li><a class="dropdown-item" href="#" data-filter="week">Last 7 Days</a></li>
+                                            <li><a class="dropdown-item" href="#" data-filter="all" data-chart="status">All Time</a></li>
+                                            <li><a class="dropdown-item" href="#" data-filter="month" data-chart="status">Last 30 Days</a></li>
+                                            <li><a class="dropdown-item" href="#" data-filter="week" data-chart="status">Last 7 Days</a></li>
                                         </ul>
                                     </div>
                                 </div>
@@ -405,13 +406,13 @@
                                 <div class="card-header py-3 d-flex justify-content-between align-items-center">
                                     <h6 class="m-0 font-weight-bold text-primary">Request Timeline</h6>
                                     <div class="dropdown">
-                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="timelineFilter" data-bs-toggle="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="timelineFilter" data-bs-toggle="dropdown" aria-expanded="false">
                                             <i class="fas fa-filter"></i>
                                         </button>
                                         <ul class="dropdown-menu">
-                                            <li><a class="dropdown-item" href="#" data-filter="month">Last 30 Days</a></li>
-                                            <li><a class="dropdown-item" href="#" data-filter="week">Last 7 Days</a></li>
-                                            <li><a class="dropdown-item" href="#" data-filter="day">Today</a></li>
+                                            <li><a class="dropdown-item" href="#" data-filter="month" data-chart="timeline">Last 30 Days</a></li>
+                                            <li><a class="dropdown-item" href="#" data-filter="week" data-chart="timeline">Last 7 Days</a></li>
+                                            <li><a class="dropdown-item" href="#" data-filter="day" data-chart="timeline">Today</a></li>
                                         </ul>
                                     </div>
                                 </div>
@@ -427,13 +428,13 @@
                                 <div class="card-header py-3 d-flex justify-content-between align-items-center">
                                     <h6 class="m-0 font-weight-bold text-primary">Top Requested Components</h6>
                                     <div class="dropdown">
-                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="topComponentsFilter" data-bs-toggle="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="topComponentsFilter" data-bs-toggle="dropdown" aria-expanded="false">
                                             <i class="fas fa-filter"></i>
                                         </button>
                                         <ul class="dropdown-menu">
-                                            <li><a class="dropdown-item" href="#" data-filter="all">All Time</a></li>
-                                            <li><a class="dropdown-item" href="#" data-filter="month">Last 30 Days</a></li>
-                                            <li><a class="dropdown-item" href="#" data-filter="week">Last 7 Days</a></li>
+                                            <li><a class="dropdown-item" href="#" data-filter="all" data-chart="topComponents">All Time</a></li>
+                                            <li><a class="dropdown-item" href="#" data-filter="month" data-chart="topComponents">Last 30 Days</a></li>
+                                            <li><a class="dropdown-item" href="#" data-filter="week" data-chart="topComponents">Last 7 Days</a></li>
                                         </ul>
                                     </div>
                                 </div>
@@ -449,13 +450,13 @@
                                 <div class="card-header py-3 d-flex justify-content-between align-items-center">
                                     <h6 class="m-0 font-weight-bold text-primary">Issue vs Return</h6>
                                     <div class="dropdown">
-                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="issueReturnFilter" data-bs-toggle="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="issueReturnFilter" data-bs-toggle="dropdown" aria-expanded="false">
                                             <i class="fas fa-filter"></i>
                                         </button>
                                         <ul class="dropdown-menu">
-                                            <li><a class="dropdown-item" href="#" data-filter="month">Last 30 Days</a></li>
-                                            <li><a class="dropdown-item" href="#" data-filter="week">Last 7 Days</a></li>
-                                            <li><a class="dropdown-item" href="#" data-filter="day">Today</a></li>
+                                            <li><a class="dropdown-item" href="#" data-filter="month" data-chart="issueReturn">Last 30 Days</a></li>
+                                            <li><a class="dropdown-item" href="#" data-filter="week" data-chart="issueReturn">Last 7 Days</a></li>
+                                            <li><a class="dropdown-item" href="#" data-filter="day" data-chart="issueReturn">Today</a></li>
                                         </ul>
                                     </div>
                                 </div>
@@ -1132,7 +1133,81 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+
+    // --- ISSUED COMPONENTS SEARCH ---
+    const issuedSearchInput = document.getElementById('issuedSearchInput');
+    const issuedTable = document.querySelector('#issued .table tbody');
+    const issuedRows = issuedTable.getElementsByTagName('tr');
+
+    if (issuedSearchInput && issuedTable) {
+        issuedSearchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+
+            for (let row of issuedRows) {
+                if (row.classList.contains('text-center')) continue;
+
+                const component = row.cells[0].textContent.toLowerCase();
+                const issuedTo = row.cells[1].textContent.toLowerCase();
+                const quantity = row.cells[2].textContent.toLowerCase();
+                const issueDate = row.cells[3].textContent.toLowerCase();
+                const returnDeadline = row.cells[4].textContent.toLowerCase();
+                const status = row.cells[5].textContent.toLowerCase();
+
+                const matches = component.includes(searchTerm) ||
+                              issuedTo.includes(searchTerm) ||
+                              quantity.includes(searchTerm) ||
+                              issueDate.includes(searchTerm) ||
+                              returnDeadline.includes(searchTerm) ||
+                              status.includes(searchTerm);
+
+                row.style.display = matches ? '' : 'none';
+            }
+
+            // Show/hide "No results" message
+            const noResultsRow = issuedTable.querySelector('.text-center');
+            if (noResultsRow) {
+                const hasVisibleRows = Array.from(issuedRows).some(row => row.style.display !== 'none');
+                noResultsRow.style.display = hasVisibleRows ? 'none' : '';
+            }
+        });
+
+        // Add search button functionality
+        const issuedSearchButton = issuedSearchInput.nextElementSibling;
+        if (issuedSearchButton) {
+            issuedSearchButton.addEventListener('click', function() {
+                issuedSearchInput.dispatchEvent(new Event('input'));
+            });
+        }
+
+        // Add keyboard support
+        issuedSearchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                this.dispatchEvent(new Event('input'));
+            }
+        });
+    }
+
+    // Add filter change handlers for all dropdowns
+    document.querySelectorAll('.dropdown-item[data-filter]').forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            const filter = this.getAttribute('data-filter');
+            const chart = this.getAttribute('data-chart');
+            
+            // Update the dropdown button text
+            const dropdownButton = this.closest('.dropdown').querySelector('.dropdown-toggle');
+            dropdownButton.innerHTML = `<i class="fas fa-filter"></i> ${this.textContent}`;
+            
+            // Here you would typically make an AJAX call to get filtered data
+            // For now, we'll just prevent the default behavior
+            console.log(`Filter changed for ${chart} to ${filter}`);
+        });
+    });
 });
 </script>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'inventory/js/admin_dashboard.js' %}"></script>
 {% endblock %}
  

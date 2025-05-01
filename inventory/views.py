@@ -15,6 +15,7 @@ from barcode.writer import ImageWriter
 import os
 from django.conf import settings
 import json
+from django.db import transaction
 
 
 
@@ -520,26 +521,31 @@ def direct_issue_component(request):
         if form.is_valid():
             student = form.cleaned_data['student']
             return_deadline = form.cleaned_data['return_deadline']
-            notes = form.cleaned_data.get('notes', '')
+            notes = form.cleaned_data['notes']
             
-            # Convert return_deadline to timezone-aware datetime
-            if isinstance(return_deadline, date):
-                return_deadline = datetime.combine(return_deadline, datetime.min.time())
-            return_deadline = timezone.make_aware(return_deadline)
-            
-            # Check if bulk issue is requested
+            # Get bulk components data
             bulk_components = request.POST.getlist('bulk_components[]')
             bulk_quantities = request.POST.getlist('bulk_quantities[]')
             
             if bulk_components:
                 # Bulk issue multiple components
                 success_count = 0
-                for i, component_id in enumerate(bulk_components):
-                    try:
-                        component = Component.objects.get(id=component_id)
-                        quantity = int(bulk_quantities[i])
-                        
-                        if quantity <= component.quantity:
+                failed_components = []
+                
+                # Use transaction to ensure atomicity
+                with transaction.atomic():
+                    for i, component_id in enumerate(bulk_components):
+                        try:
+                            # Lock the component row
+                            component = Component.objects.select_for_update().get(id=component_id)
+                            quantity = int(bulk_quantities[i])
+                            
+                            # Check availability and quantity
+                            if not component.available or quantity > component.quantity:
+                                failed_components.append(component.name)
+                                continue
+                            
+                            # Create issue request
                             issue_request = IssueRequest.objects.create(
                                 student=student,
                                 component=component,
@@ -551,18 +557,30 @@ def direct_issue_component(request):
                                 issue_date=timezone.now(),
                                 admin=request.user
                             )
+                            
+                            # Update component quantity and availability
+                            component.quantity -= quantity
+                            if component.quantity <= 0:
+                                component.available = False
+                            component.save()
+                            
                             success_count += 1
-                    except (Component.DoesNotExist, ValueError, IndexError):
-                        continue
+                        except (Component.DoesNotExist, ValueError, IndexError):
+                            continue
                 
                 if success_count > 0:
                     messages.success(request, f'Successfully issued {success_count} components to {student.username}.')
-                else:
+                if failed_components:
+                    messages.warning(request, f'Failed to issue components: {", ".join(failed_components)}')
+                if success_count == 0 and not failed_components:
                     messages.error(request, 'Failed to issue any components.')
             else:
                 # Single component issue
-                issue_request = form.save(admin=request.user)
-                messages.success(request, f'Component {issue_request.component.name} has been issued to {issue_request.student.username}.')
+                try:
+                    issue_request = form.save(admin=request.user)
+                    messages.success(request, f'Component {issue_request.component.name} has been issued to {issue_request.student.username}.')
+                except ValueError as e:
+                    messages.error(request, str(e))
             
             return redirect('home')
     else:
