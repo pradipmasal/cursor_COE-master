@@ -67,6 +67,11 @@
                         <i class="fas fa-box me-2"></i>Issued Components
                     </button>
                 </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="analytics-tab" data-bs-toggle="tab" data-bs-target="#analytics" type="button" role="tab" aria-controls="analytics" aria-selected="false">
+                        <i class="fas fa-chart-line me-2"></i>Analytics
+                    </button>
+                </li>
                 {% if request.user.is_superuser %}
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button" role="tab" aria-controls="users" aria-selected="false">
@@ -274,6 +279,194 @@
                     </div>
                 </div>
 
+                <!-- Analytics Tab -->
+                <div class="tab-pane fade" id="analytics" role="tabpanel" aria-labelledby="analytics-tab">
+                    <div class="row">
+                        <!-- Summary Cards -->
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="card border-left-primary shadow h-100 py-2">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                                Total Components</div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_components }}</div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="fas fa-microchip fa-2x text-gray-300"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="card border-left-success shadow h-100 py-2">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                                Available Components</div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ available_components }}</div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="card border-left-warning shadow h-100 py-2">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                                Pending Requests</div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ status_data.pending }}</div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="card border-left-info shadow h-100 py-2">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                                Total Requests</div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                                {{ status_data.pending|add:status_data.approved|add:status_data.rejected|add:status_data.returned }}
+                                            </div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Inventory Status -->
+                        <div class="col-xl-6 col-lg-6 mb-4">
+                            <div class="card shadow h-100">
+                                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                    <h6 class="m-0 font-weight-bold text-primary">Inventory Status</h6>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="inventoryFilter" data-bs-toggle="dropdown">
+                                            <i class="fas fa-filter"></i>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" href="#" data-filter="all">All Time</a></li>
+                                            <li><a class="dropdown-item" href="#" data-filter="month">Last 30 Days</a></li>
+                                            <li><a class="dropdown-item" href="#" data-filter="week">Last 7 Days</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="inventoryChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Request Status Distribution -->
+                        <div class="col-xl-6 col-lg-6 mb-4">
+                            <div class="card shadow h-100">
+                                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                    <h6 class="m-0 font-weight-bold text-primary">Request Status Distribution</h6>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="statusFilter" data-bs-toggle="dropdown">
+                                            <i class="fas fa-filter"></i>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" href="#" data-filter="all">All Time</a></li>
+                                            <li><a class="dropdown-item" href="#" data-filter="month">Last 30 Days</a></li>
+                                            <li><a class="dropdown-item" href="#" data-filter="week">Last 7 Days</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="statusChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Request Timeline -->
+                        <div class="col-xl-12 col-lg-12 mb-4">
+                            <div class="card shadow h-100">
+                                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                    <h6 class="m-0 font-weight-bold text-primary">Request Timeline</h6>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="timelineFilter" data-bs-toggle="dropdown">
+                                            <i class="fas fa-filter"></i>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" href="#" data-filter="month">Last 30 Days</a></li>
+                                            <li><a class="dropdown-item" href="#" data-filter="week">Last 7 Days</a></li>
+                                            <li><a class="dropdown-item" href="#" data-filter="day">Today</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="timelineChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Top Requested Components -->
+                        <div class="col-xl-6 col-lg-6 mb-4">
+                            <div class="card shadow h-100">
+                                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                    <h6 class="m-0 font-weight-bold text-primary">Top Requested Components</h6>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="topComponentsFilter" data-bs-toggle="dropdown">
+                                            <i class="fas fa-filter"></i>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" href="#" data-filter="all">All Time</a></li>
+                                            <li><a class="dropdown-item" href="#" data-filter="month">Last 30 Days</a></li>
+                                            <li><a class="dropdown-item" href="#" data-filter="week">Last 7 Days</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="topComponentsChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Issue vs Return -->
+                        <div class="col-xl-6 col-lg-6 mb-4">
+                            <div class="card shadow h-100">
+                                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                    <h6 class="m-0 font-weight-bold text-primary">Issue vs Return</h6>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="issueReturnFilter" data-bs-toggle="dropdown">
+                                            <i class="fas fa-filter"></i>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" href="#" data-filter="month">Last 30 Days</a></li>
+                                            <li><a class="dropdown-item" href="#" data-filter="week">Last 7 Days</a></li>
+                                            <li><a class="dropdown-item" href="#" data-filter="day">Today</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="issueReturnChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- User Management Tab -->
                 <div class="tab-pane fade" id="users" role="tabpanel" aria-labelledby="users-tab">
                     <div class="card shadow mb-4">
@@ -307,7 +500,11 @@
                                     <tbody>
                                         {% for user in users %}
                                         <tr>
-                                            <td>{{ user.username }}</td>
+                                            <td>
+                                                <a href="{% url 'user_dashboard' user.id %}">
+                                                    {{ user.username }}
+                                                </a>
+                                            </td>
                                             <td>{{ user.email }}</td>
                                             <td>{{ user.get_full_name|default:"-" }}</td>
                                             <td>
@@ -327,7 +524,7 @@
                                                         <i class="fas fa-edit"></i>
                                                     </a>
                                                     {% if not user.is_superuser %}
-                                                        <a href="{% url 'admin:auth_user_delete' user.id %}" class="btn btn-danger">
+                                                        <a href="{% url 'delete_user' user.id %}" class="btn btn-danger">
                                                             <i class="fas fa-trash"></i>
                                                         </a>
                                                     {% endif %}
@@ -360,6 +557,10 @@
 
 <style>
 /* Custom styles for better responsiveness and professional look */
+a {
+    text-decoration: none;
+}
+
 .container-fluid {
     padding: 1.5rem;
 }
@@ -529,6 +730,7 @@
 </style>
 
 <!-- Add this before the closing </body> tag -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Components Tab Search
@@ -626,6 +828,309 @@ document.addEventListener('DOMContentLoaded', function() {
             const hasVisibleRows = Array.from(usersRows).some(row => row.style.display !== 'none');
             noUsersRow.style.display = hasVisibleRows ? 'none' : '';
         }
+    });
+
+    // Initialize charts when analytics tab is shown
+    document.getElementById('analytics-tab').addEventListener('shown.bs.tab', function (e) {
+        // Inventory Status Chart
+        const inventoryCtx = document.getElementById('inventoryChart').getContext('2d');
+        new Chart(inventoryCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Available', 'Unavailable'],
+                datasets: [{
+                    data: [{{ available_components }}, {{ unavailable_components }}],
+                    backgroundColor: ['#1cc88a', '#e74a3b'],
+                    borderWidth: 1,
+                    hoverBackgroundColor: ['#17a673', '#be2617'],
+                    hoverBorderColor: "rgba(234, 236, 244, 1)",
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: "rgb(255,255,255)",
+                        bodyColor: "#858796",
+                        titleColor: '#6e707e',
+                        titleFontSize: 14,
+                        borderColor: '#dddfeb',
+                        borderWidth: 1,
+                        padding: 15,
+                        displayColors: false,
+                        callbacks: {
+                            label: function(context) {
+                                const value = context.raw;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return `${context.label}: ${value} (${percentage}%)`;
+                            }
+                        }
+                    }
+                },
+                cutout: '70%'
+            }
+        });
+
+        // Request Status Distribution Chart
+        const statusCtx = document.getElementById('statusChart').getContext('2d');
+        new Chart(statusCtx, {
+            type: 'pie',
+            data: {
+                labels: ['Pending', 'Approved', 'Rejected', 'Returned'],
+                datasets: [{
+                    data: [
+                        {{ status_data.pending }},
+                        {{ status_data.approved }},
+                        {{ status_data.rejected }},
+                        {{ status_data.returned }}
+                    ],
+                    backgroundColor: ['#4e73df', '#1cc88a', '#e74a3b', '#f6c23e'],
+                    borderWidth: 1,
+                    hoverBackgroundColor: ['#2e59d9', '#17a673', '#be2617', '#dda20a'],
+                    hoverBorderColor: "rgba(234, 236, 244, 1)",
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: "rgb(255,255,255)",
+                        bodyColor: "#858796",
+                        titleColor: '#6e707e',
+                        titleFontSize: 14,
+                        borderColor: '#dddfeb',
+                        borderWidth: 1,
+                        padding: 15,
+                        displayColors: false,
+                        callbacks: {
+                            label: function(context) {
+                                const value = context.raw;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return `${context.label}: ${value} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Request Timeline Chart
+        const timelineCtx = document.getElementById('timelineChart').getContext('2d');
+        const timelineData = JSON.parse('{{ daily_requests|escapejs }}');
+        new Chart(timelineCtx, {
+            type: 'line',
+            data: {
+                labels: timelineData.map(item => item.date),
+                datasets: [{
+                    label: 'Requests',
+                    data: timelineData.map(item => item.count),
+                    borderColor: '#4e73df',
+                    backgroundColor: 'rgba(78, 115, 223, 0.05)',
+                    pointBackgroundColor: '#4e73df',
+                    pointBorderColor: '#4e73df',
+                    pointHoverBackgroundColor: '#2e59d9',
+                    pointHoverBorderColor: '#2e59d9',
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: "rgb(255,255,255)",
+                        bodyColor: "#858796",
+                        titleColor: '#6e707e',
+                        titleFontSize: 14,
+                        borderColor: '#dddfeb',
+                        borderWidth: 1,
+                        padding: 15,
+                        displayColors: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)',
+                            drawBorder: false
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false,
+                            drawBorder: false
+                        }
+                    }
+                }
+            }
+        });
+
+        // Top Requested Components Chart
+        const topComponentsCtx = document.getElementById('topComponentsChart').getContext('2d');
+        const topComponentsData = JSON.parse('{{ top_components|escapejs }}');
+        new Chart(topComponentsCtx, {
+            type: 'bar',
+            data: {
+                labels: topComponentsData.map(item => item.component__name),
+                datasets: [{
+                    label: 'Number of Requests',
+                    data: topComponentsData.map(item => item.count),
+                    backgroundColor: '#4e73df',
+                    hoverBackgroundColor: '#2e59d9',
+                    borderColor: '#4e73df',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: "rgb(255,255,255)",
+                        bodyColor: "#858796",
+                        titleColor: '#6e707e',
+                        titleFontSize: 14,
+                        borderColor: '#dddfeb',
+                        borderWidth: 1,
+                        padding: 15,
+                        displayColors: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)',
+                            drawBorder: false
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false,
+                            drawBorder: false
+                        },
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    }
+                }
+            }
+        });
+
+        // Issue vs Return Chart
+        const issueReturnCtx = document.getElementById('issueReturnChart').getContext('2d');
+        const issuesData = JSON.parse('{{ daily_issues|escapejs }}');
+        const returnsData = JSON.parse('{{ daily_returns|escapejs }}');
+        new Chart(issueReturnCtx, {
+            type: 'line',
+            data: {
+                labels: issuesData.map(item => item.date),
+                datasets: [
+                    {
+                        label: 'Issues',
+                        data: issuesData.map(item => item.count),
+                        borderColor: '#1cc88a',
+                        backgroundColor: 'rgba(28, 200, 138, 0.05)',
+                        pointBackgroundColor: '#1cc88a',
+                        pointBorderColor: '#1cc88a',
+                        pointHoverBackgroundColor: '#17a673',
+                        pointHoverBorderColor: '#17a673',
+                        pointRadius: 3,
+                        pointHoverRadius: 5,
+                        tension: 0.3,
+                        fill: true
+                    },
+                    {
+                        label: 'Returns',
+                        data: returnsData.map(item => item.count),
+                        borderColor: '#e74a3b',
+                        backgroundColor: 'rgba(231, 74, 59, 0.05)',
+                        pointBackgroundColor: '#e74a3b',
+                        pointBorderColor: '#e74a3b',
+                        pointHoverBackgroundColor: '#be2617',
+                        pointHoverBorderColor: '#be2617',
+                        pointRadius: 3,
+                        pointHoverRadius: 5,
+                        tension: 0.3,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: "rgb(255,255,255)",
+                        bodyColor: "#858796",
+                        titleColor: '#6e707e',
+                        titleFontSize: 14,
+                        borderColor: '#dddfeb',
+                        borderWidth: 1,
+                        padding: 15,
+                        displayColors: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)',
+                            drawBorder: false
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false,
+                            drawBorder: false
+                        }
+                    }
+                }
+            }
+        });
     });
 });
 </script>

@@ -1,0 +1,600 @@
+{% extends 'inventory/base.html' %}
+
+{% block title %}Analytics Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800">Analytics Dashboard</h1>
+            <p class="text-muted">Comprehensive insights into your inventory management</p>
+        </div>
+        <a href="{% url 'admin_home' %}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Components</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_components }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-microchip fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Available Components</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ available_components }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Pending Requests</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ status_data.pending }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Total Requests</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ status_data.pending|add:status_data.approved|add:status_data.rejected|add:status_data.returned }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="row">
+        <!-- Inventory Status -->
+        <div class="col-xl-6 col-lg-6 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Inventory Status</h6>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="inventoryFilter" data-bs-toggle="dropdown">
+                            <i class="fas fa-filter"></i>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="" data-filter="all">All Time</a></li>
+                            <li><a class="dropdown-item" href="" data-filter="month">Last 30 Days</a></li>
+                            <li><a class="dropdown-item" href="" data-filter="week">Last 7 Days</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <canvas id="inventoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Request Status Distribution -->
+        <div class="col-xl-6 col-lg-6 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Request Status Distribution</h6>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="statusFilter" data-bs-toggle="dropdown">
+                            <i class="fas fa-filter"></i>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="" data-filter="all">All Time</a></li>
+                            <li><a class="dropdown-item" href="" data-filter="month">Last 30 Days</a></li>
+                            <li><a class="dropdown-item" href="" data-filter="week">Last 7 Days</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Request Timeline -->
+        <div class="col-xl-12 col-lg-12 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Request Timeline</h6>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="timelineFilter" data-bs-toggle="dropdown">
+                            <i class="fas fa-filter"></i>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="" data-filter="month">Last 30 Days</a></li>
+                            <li><a class="dropdown-item" href="" data-filter="week">Last 7 Days</a></li>
+                            <li><a class="dropdown-item" href="" data-filter="day">Today</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <canvas id="timelineChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Requested Components -->
+        <div class="col-xl-6 col-lg-6 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Top Requested Components</h6>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="topComponentsFilter" data-bs-toggle="dropdown">
+                            <i class="fas fa-filter"></i>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="" data-filter="all">All Time</a></li>
+                            <li><a class="dropdown-item" href="" data-filter="month">Last 30 Days</a></li>
+                            <li><a class="dropdown-item" href="" data-filter="week">Last 7 Days</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <canvas id="topComponentsChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Issue vs Return -->
+        <div class="col-xl-6 col-lg-6 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Issue vs Return</h6>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="issueReturnFilter" data-bs-toggle="dropdown">
+                            <i class="fas fa-filter"></i>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="" data-filter="month">Last 30 Days</a></li>
+                            <li><a class="dropdown-item" href="" data-filter="week">Last 7 Days</a></li>
+                            <li><a class="dropdown-item" href="" data-filter="day">Today</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <canvas id="issueReturnChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Data from Django context
+const inventoryData = {
+    total: {{ total_components }},
+    available: {{ available_components }},
+    unavailable: {{ unavailable_components }}
+};
+
+const statusData = {{ status_data|safe }};
+
+const dailyRequests = {{ daily_requests|safe }};
+const topComponents = {{ top_components|safe }};
+const dailyIssues = {{ daily_issues|safe }};
+const dailyReturns = {{ daily_returns|safe }};
+
+// Chart.js global configuration
+Chart.defaults.font.family = 'Nunito, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+Chart.defaults.color = '#858796';
+Chart.defaults.borderColor = '#e3e6f0';
+
+// Inventory Status Chart
+const inventoryCtx = document.getElementById('inventoryChart').getContext('2d');
+new Chart(inventoryCtx, {
+    type: 'doughnut',
+    data: {
+        labels: ['Available', 'Unavailable'],
+        datasets: [{
+            data: [inventoryData.available, inventoryData.unavailable],
+            backgroundColor: ['#1cc88a', '#e74a3b'],
+            borderWidth: 1,
+            hoverBackgroundColor: ['#17a673', '#be2617'],
+            hoverBorderColor: "rgba(234, 236, 244, 1)",
+        }]
+    },
+    options: {
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: {
+                    padding: 20,
+                    usePointStyle: true,
+                    pointStyle: 'circle'
+                }
+            },
+            tooltip: {
+                backgroundColor: "rgb(255,255,255)",
+                bodyColor: "#858796",
+                titleColor: '#6e707e',
+                titleFontSize: 14,
+                borderColor: '#dddfeb',
+                borderWidth: 1,
+                padding: 15,
+                displayColors: false,
+                callbacks: {
+                    label: function(context) {
+                        const value = context.raw;
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = ((value / total) * 100).toFixed(1);
+                        return `${context.label}: ${value} (${percentage}%)`;
+                    }
+                }
+            }
+        },
+        cutout: '70%'
+    }
+});
+
+// Request Status Distribution Chart
+const statusCtx = document.getElementById('statusChart').getContext('2d');
+new Chart(statusCtx, {
+    type: 'pie',
+    data: {
+        labels: Object.keys(statusData).map(key => key.charAt(0).toUpperCase() + key.slice(1)),
+        datasets: [{
+            data: Object.values(statusData),
+            backgroundColor: ['#4e73df', '#1cc88a', '#e74a3b', '#f6c23e'],
+            borderWidth: 1,
+            hoverBackgroundColor: ['#2e59d9', '#17a673', '#be2617', '#dda20a'],
+            hoverBorderColor: "rgba(234, 236, 244, 1)",
+        }]
+    },
+    options: {
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: {
+                    padding: 20,
+                    usePointStyle: true,
+                    pointStyle: 'circle'
+                }
+            },
+            tooltip: {
+                backgroundColor: "rgb(255,255,255)",
+                bodyColor: "#858796",
+                titleColor: '#6e707e',
+                titleFontSize: 14,
+                borderColor: '#dddfeb',
+                borderWidth: 1,
+                padding: 15,
+                displayColors: false,
+                callbacks: {
+                    label: function(context) {
+                        const value = context.raw;
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = ((value / total) * 100).toFixed(1);
+                        return `${context.label}: ${value} (${percentage}%)`;
+                    }
+                }
+            }
+        }
+    }
+});
+
+// Request Timeline Chart
+const timelineCtx = document.getElementById('timelineChart').getContext('2d');
+new Chart(timelineCtx, {
+    type: 'line',
+    data: {
+        labels: dailyRequests.map(item => item.date),
+        datasets: [{
+            label: 'Requests',
+            data: dailyRequests.map(item => item.count),
+            borderColor: '#4e73df',
+            backgroundColor: 'rgba(78, 115, 223, 0.05)',
+            pointBackgroundColor: '#4e73df',
+            pointBorderColor: '#4e73df',
+            pointHoverBackgroundColor: '#2e59d9',
+            pointHoverBorderColor: '#2e59d9',
+            pointRadius: 3,
+            pointHoverRadius: 5,
+            tension: 0.3,
+            fill: true
+        }]
+    },
+    options: {
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            },
+            tooltip: {
+                backgroundColor: "rgb(255,255,255)",
+                bodyColor: "#858796",
+                titleColor: '#6e707e',
+                titleFontSize: 14,
+                borderColor: '#dddfeb',
+                borderWidth: 1,
+                padding: 15,
+                displayColors: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                },
+                grid: {
+                    color: 'rgba(0, 0, 0, 0.05)',
+                    drawBorder: false
+                }
+            },
+            x: {
+                grid: {
+                    display: false,
+                    drawBorder: false
+                }
+            }
+        }
+    }
+});
+
+// Top Requested Components Chart
+const topComponentsCtx = document.getElementById('topComponentsChart').getContext('2d');
+new Chart(topComponentsCtx, {
+    type: 'bar',
+    data: {
+        labels: topComponents.map(item => item.component__name),
+        datasets: [{
+            label: 'Number of Requests',
+            data: topComponents.map(item => item.count),
+            backgroundColor: '#4e73df',
+            hoverBackgroundColor: '#2e59d9',
+            borderColor: '#4e73df',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            },
+            tooltip: {
+                backgroundColor: "rgb(255,255,255)",
+                bodyColor: "#858796",
+                titleColor: '#6e707e',
+                titleFontSize: 14,
+                borderColor: '#dddfeb',
+                borderWidth: 1,
+                padding: 15,
+                displayColors: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                },
+                grid: {
+                    color: 'rgba(0, 0, 0, 0.05)',
+                    drawBorder: false
+                }
+            },
+            x: {
+                grid: {
+                    display: false,
+                    drawBorder: false
+                },
+                ticks: {
+                    maxRotation: 45,
+                    minRotation: 45
+                }
+            }
+        }
+    }
+});
+
+// Issue vs Return Chart
+const issueReturnCtx = document.getElementById('issueReturnChart').getContext('2d');
+new Chart(issueReturnCtx, {
+    type: 'line',
+    data: {
+        labels: dailyIssues.map(item => item.date),
+        datasets: [
+            {
+                label: 'Issues',
+                data: dailyIssues.map(item => item.count),
+                borderColor: '#1cc88a',
+                backgroundColor: 'rgba(28, 200, 138, 0.05)',
+                pointBackgroundColor: '#1cc88a',
+                pointBorderColor: '#1cc88a',
+                pointHoverBackgroundColor: '#17a673',
+                pointHoverBorderColor: '#17a673',
+                pointRadius: 3,
+                pointHoverRadius: 5,
+                tension: 0.3,
+                fill: true
+            },
+            {
+                label: 'Returns',
+                data: dailyReturns.map(item => item.count),
+                borderColor: '#e74a3b',
+                backgroundColor: 'rgba(231, 74, 59, 0.05)',
+                pointBackgroundColor: '#e74a3b',
+                pointBorderColor: '#e74a3b',
+                pointHoverBackgroundColor: '#be2617',
+                pointHoverBorderColor: '#be2617',
+                pointRadius: 3,
+                pointHoverRadius: 5,
+                tension: 0.3,
+                fill: true
+            }
+        ]
+    },
+    options: {
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: {
+                    padding: 20,
+                    usePointStyle: true,
+                    pointStyle: 'circle'
+                }
+            },
+            tooltip: {
+                backgroundColor: "rgb(255,255,255)",
+                bodyColor: "#858796",
+                titleColor: '#6e707e',
+                titleFontSize: 14,
+                borderColor: '#dddfeb',
+                borderWidth: 1,
+                padding: 15,
+                displayColors: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                },
+                grid: {
+                    color: 'rgba(0, 0, 0, 0.05)',
+                    drawBorder: false
+                }
+            },
+            x: {
+                grid: {
+                    display: false,
+                    drawBorder: false
+                }
+            }
+        }
+    }
+});
+
+// Add filter functionality
+document.querySelectorAll('.dropdown-menu').forEach(menu => {
+    menu.addEventListener('click', function(e) {
+        if (e.target.tagName === 'A') {
+            const filter = e.target.dataset.filter;
+            // Here you would typically make an AJAX call to update the data
+            // For now, we'll just update the button text
+            const button = this.previousElementSibling;
+            button.textContent = e.target.textContent;
+        }
+    });
+});
+</script>
+
+<style>
+/* Custom styles for better responsiveness and professional look */
+.container-fluid {
+    padding: 1.5rem;
+}
+
+.card {
+    border: none;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.card-header {
+    background-color: #f8f9fc;
+    border-bottom: 1px solid #e3e6f0;
+    padding: 1rem 1.25rem;
+}
+
+.card-body {
+    padding: 1.25rem;
+}
+
+.border-left-primary {
+    border-left: 0.25rem solid #4e73df !important;
+}
+
+.border-left-success {
+    border-left: 0.25rem solid #1cc88a !important;
+}
+
+.border-left-warning {
+    border-left: 0.25rem solid #f6c23e !important;
+}
+
+.border-left-info {
+    border-left: 0.25rem solid #36b9cc !important;
+}
+
+.text-xs {
+    font-size: 0.7rem;
+}
+
+.text-gray-800 {
+    color: #5a5c69 !important;
+}
+
+.text-gray-300 {
+    color: #dddfeb !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .card-header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .d-flex {
+        flex-wrap: wrap;
+    }
+}
+</style>
+{% endblock %}
+{% endblock %} 
