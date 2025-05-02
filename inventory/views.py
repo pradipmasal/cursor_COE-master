@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import login
 from django.contrib import messages
-from django.db.models import Count, Sum
+from django.db.models import Count, Sum, Avg
 from .models import Component, IssueRequest, UserProfile, User
 from .forms import UserRegisterForm, ComponentForm, IssueRequestForm, IssueRequestUpdateForm, DirectIssueComponentForm
 from django.utils import timezone
@@ -19,6 +19,9 @@ from django.db import transaction
 from django.template.loader import render_to_string
 from xhtml2pdf import pisa
 from io import BytesIO
+import numpy as np
+from sklearn.linear_model import LinearRegression
+from django.views.decorators.http import require_GET
 
 
 
@@ -652,15 +655,13 @@ def analytics_dashboard(request):
     thirty_days_ago = timezone.now() - timedelta(days=30)
     daily_requests = IssueRequest.objects.filter(
         request_date__gte=thirty_days_ago
-    ).extra(
-        select={'date': 'DATE(request_date)'}
-    ).values('date').annotate(count=Count('id')).order_by('date')
+    ).values('request_date').annotate(count=Count('id')).order_by('request_date')
 
     # Format daily requests data
     formatted_daily_requests = []
     for item in daily_requests:
         formatted_daily_requests.append({
-            'date': item['date'].strftime('%Y-%m-%d'),
+            'date': item['request_date'].strftime('%Y-%m-%d'),
             'count': item['count']
         })
 
@@ -674,42 +675,98 @@ def analytics_dashboard(request):
     daily_issues = IssueRequest.objects.filter(
         status='approved',
         issue_date__gte=thirty_days_ago
-    ).extra(
-        select={'date': 'DATE(issue_date)'}
-    ).values('date').annotate(count=Count('id')).order_by('date')
+    ).values('issue_date').annotate(count=Count('id')).order_by('issue_date')
 
     # Format daily issues data
     formatted_daily_issues = []
     for item in daily_issues:
         formatted_daily_issues.append({
-            'date': item['date'].strftime('%Y-%m-%d'),
+            'date': item['issue_date'].strftime('%Y-%m-%d'),
             'count': item['count']
         })
 
     daily_returns = IssueRequest.objects.filter(
         status='returned',
         return_date__gte=thirty_days_ago
-    ).extra(
-        select={'date': 'DATE(return_date)'}
-    ).values('date').annotate(count=Count('id')).order_by('date')
+    ).values('return_date').annotate(count=Count('id')).order_by('return_date')
 
     # Format daily returns data
     formatted_daily_returns = []
     for item in daily_returns:
         formatted_daily_returns.append({
-            'date': item['date'].strftime('%Y-%m-%d'),
+            'date': item['return_date'].strftime('%Y-%m-%d'),
             'count': item['count']
         })
+
+    # Calculate inventory forecast
+    # Get historical inventory data for the last 90 days
+    ninety_days_ago = timezone.now() - timedelta(days=90)
+    daily_inventory = []
+    
+    for i in range(90):
+        date = ninety_days_ago + timedelta(days=i)
+        # Get components that were available on this date
+        available = Component.objects.filter(
+            available=True,
+            created_at__lte=date
+        ).exclude(
+            issuerequest__issue_date__lte=date,
+            issuerequest__return_date__gt=date
+        ).count()
+        daily_inventory.append({
+            'date': date.strftime('%Y-%m-%d'),
+            'count': available
+        })
+
+    # Prepare data for forecasting
+    X = np.array(range(len(daily_inventory))).reshape(-1, 1)
+    y = np.array([item['count'] for item in daily_inventory])
+    
+    # Train linear regression model
+    model = LinearRegression()
+    model.fit(X, y)
+    
+    # Generate forecast for next 30 days
+    forecast_dates = []
+    forecast_values = []
+    current_inventory = []
+    
+    # Calculate average daily change
+    daily_changes = np.diff(y)
+    avg_daily_change = np.mean(daily_changes)
+    
+    # Get current inventory level
+    current_level = available_components
+    
+    for i in range(30):
+        date = timezone.now() + timedelta(days=i)
+        forecast_dates.append(date.strftime('%Y-%m-%d'))
+        # Use both linear regression and average daily change for forecasting
+        linear_prediction = int(model.predict([[len(daily_inventory) + i]])[0])
+        trend_prediction = int(current_level + (avg_daily_change * (i + 1)))
+        # Take the average of both predictions
+        forecast_value = int((linear_prediction + trend_prediction) / 2)
+        # Ensure forecast doesn't go below 0
+        forecast_values.append(max(0, forecast_value))
+        current_inventory.append(current_level)
+
+    # Convert lists to JSON strings for JavaScript
+    forecast_dates_json = json.dumps(forecast_dates)
+    forecast_values_json = json.dumps(forecast_values)
+    current_inventory_json = json.dumps(current_inventory)
 
     context = {
         'total_components': total_components,
         'available_components': available_components,
         'unavailable_components': unavailable_components,
         'status_data': status_data,
-        'daily_requests': formatted_daily_requests,
-        'top_components': list(top_components),
-        'daily_issues': formatted_daily_issues,
-        'daily_returns': formatted_daily_returns,
+        'daily_requests': json.dumps(formatted_daily_requests),
+        'top_components': json.dumps(list(top_components)),
+        'daily_issues': json.dumps(formatted_daily_issues),
+        'daily_returns': json.dumps(formatted_daily_returns),
+        'forecast_dates': forecast_dates_json,
+        'forecast_values': forecast_values_json,
+        'current_inventory': current_inventory_json,
     }
 
     return render(request, 'inventory/analytics.html', context)
@@ -727,3 +784,182 @@ def user_dashboard(request, user_id):
         'login_user': login_user
     }
     return render(request, 'inventory/user_dashboard.html', context)    
+
+@require_GET
+def api_forecast(request):
+    import numpy as np
+    from datetime import timedelta
+    from django.utils import timezone
+    from .models import Component, IssueRequest
+    from sklearn.linear_model import LinearRegression
+
+    forecast_type = request.GET.get('type', 'demand')
+    days = int(request.GET.get('days', 7))
+    component_id = request.GET.get('component', 'all')
+
+    # Filter by component if specified
+    if component_id != 'all':
+        try:
+            component = Component.objects.get(id=component_id)
+            components = Component.objects.filter(id=component_id)
+        except Component.DoesNotExist:
+            return JsonResponse({'error': 'Component not found'}, status=404)
+    else:
+        components = Component.objects.all()
+
+    # Prepare date range
+    today = timezone.now().date()
+    forecast_dates = [(today + timedelta(days=i)).strftime('%Y-%m-%d') for i in range(days)]
+
+    # Historical data for demand forecast
+    usage_history = []
+    for i in range(90):
+        date = today - timedelta(days=89 - i)
+        if component_id != 'all':
+            count = IssueRequest.objects.filter(component=component, issue_date__date=date).count()
+        else:
+            count = IssueRequest.objects.filter(issue_date__date=date).count()
+        usage_history.append(count)
+
+    # Demand Forecast (simple linear regression)
+    X = np.array(range(len(usage_history))).reshape(-1, 1)
+    y = np.array(usage_history)
+    model = LinearRegression()
+    model.fit(X, y)
+    predicted_demand = []
+    for i in range(days):
+        pred = int(max(0, model.predict([[len(usage_history) + i]])[0]))
+        predicted_demand.append(pred)
+
+    # Stock Forecast (simple: current - cumulative demand)
+    if component_id != 'all':
+        current_stock = [component.quantity] * days
+        min_stock_level = [5] * days  # Example threshold
+    else:
+        current_stock = [sum(c.quantity for c in components)] * days
+        min_stock_level = [10] * days  # Example threshold
+
+    # Reorder Date Prediction (when stock < threshold)
+    reorder_point = []
+    stock = current_stock[0]
+    reorder_date = None
+    for i, demand in enumerate(predicted_demand):
+        stock -= demand
+        reorder_point.append(5 if component_id != 'all' else 10)
+        if reorder_date is None and stock < reorder_point[-1]:
+            reorder_date = forecast_dates[i]
+    reorder_date = reorder_date or 'N/A'
+
+    # Usage Trend Forecast (category usage, here just total usage)
+    trend_growth = f"{int((np.mean(usage_history[-7:]) - np.mean(usage_history[:7])) / (np.mean(usage_history[:7]) + 1) * 100)}%" if np.mean(usage_history[:7]) > 0 else '0%'
+    trend_period = f"{forecast_dates[0]} to {forecast_dates[-1]}"
+    trend_insight = "Usage is stable." if abs(np.mean(usage_history[-7:]) - np.mean(usage_history[:7])) < 2 else ("Increasing" if np.mean(usage_history[-7:]) > np.mean(usage_history[:7]) else "Decreasing")
+
+    # Return Delay Prediction (dummy: random or fixed)
+    return_probability = [30] * days  # Example: 30% chance
+    return_delay = [2] * days  # Example: 2 days delay
+    return_action = ["Send reminder"] * days
+
+    # Prepare datasets for chart.js
+    data = {
+        'labels': forecast_dates,
+        'datasets': [],
+        'summary': {}
+    }
+    if forecast_type == 'demand':
+        data['datasets'] = [
+            {
+                'label': 'Predicted Demand',
+                'data': predicted_demand,
+                'borderColor': '#1cc88a',
+                'backgroundColor': 'rgba(28, 200, 138, 0.05)',
+                'borderDash': [5, 5],
+                'fill': True
+            }
+        ]
+        data['summary'] = {
+            'trend': trend_growth,
+            'peak': max(predicted_demand),
+            'timeline': f"{forecast_dates[0]} to {forecast_dates[-1]}"
+        }
+    elif forecast_type == 'stock':
+        data['datasets'] = [
+            {
+                'label': 'Current Stock',
+                'data': current_stock,
+                'borderColor': '#4e73df',
+                'backgroundColor': 'rgba(78, 115, 223, 0.05)',
+                'fill': True
+            },
+            {
+                'label': 'Minimum Stock Level',
+                'data': min_stock_level,
+                'borderColor': '#e74a3b',
+                'backgroundColor': 'rgba(231, 74, 59, 0.05)',
+                'borderDash': [5, 5],
+                'fill': True
+            }
+        ]
+        data['summary'] = {
+            'risk': 'Low' if min(current_stock) > min_stock_level[0] else 'High',
+            'timeline': f"{forecast_dates[0]} to {forecast_dates[-1]}",
+            'recommendation': 'Monitor stock levels closely.'
+        }
+    elif forecast_type == 'reorder':
+        data['datasets'] = [
+            {
+                'label': 'Current Stock',
+                'data': current_stock,
+                'borderColor': '#4e73df',
+                'backgroundColor': 'rgba(78, 115, 223, 0.05)',
+                'fill': True
+            },
+            {
+                'label': 'Reorder Point',
+                'data': reorder_point,
+                'borderColor': '#f6c23e',
+                'backgroundColor': 'rgba(246, 194, 62, 0.05)',
+                'borderDash': [5, 5],
+                'fill': True
+            }
+        ]
+        data['summary'] = {
+            'date': reorder_date,
+            'quantity': min_stock_level[0],
+            'note': 'Reorder before this date to avoid stockout.'
+        }
+    elif forecast_type == 'trend':
+        data['datasets'] = [
+            {
+                'label': 'Usage Trend',
+                'data': usage_history[-days:],
+                'borderColor': '#36b9cc',
+                'backgroundColor': 'rgba(54, 185, 204, 0.05)',
+                'fill': True
+            }
+        ]
+        data['summary'] = {
+            'growth': trend_growth,
+            'period': trend_period,
+            'insight': trend_insight
+        }
+    elif forecast_type == 'return':
+        data['datasets'] = [
+            {
+                'label': 'Return Probability',
+                'data': return_probability,
+                'borderColor': '#36b9cc',
+                'backgroundColor': 'rgba(54, 185, 204, 0.05)',
+                'fill': True
+            }
+        ]
+        data['summary'] = {
+            'probability': f"{return_probability[0]}%",
+            'delay': f"{return_delay[0]} days",
+            'action': return_action[0]
+        }
+    else:
+        data['datasets'] = []
+        data['summary'] = {}
+
+    return JsonResponse(data)    

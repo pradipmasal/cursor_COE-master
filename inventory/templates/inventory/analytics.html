@@ -10,521 +10,865 @@
             <h1 class="h3 mb-0 text-gray-800">Analytics Dashboard</h1>
             <p class="text-muted">Comprehensive insights into your inventory management</p>
         </div>
-        <a href="{% url 'admin_home' %}" class="btn btn-outline-primary">
+        <a href="{% url 'home' %}" class="btn btn-outline-primary">
             <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
         </a>
     </div>
 
-    <!-- Summary Cards -->
-    <div class="row mb-4">
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-primary shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                Total Components</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_components }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-microchip fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <!-- Analytics Tabs -->
+    <ul class="nav nav-tabs mb-4" id="analyticsTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab" aria-controls="overview" aria-selected="true">
+                <i class="fas fa-chart-pie me-2"></i>Overview
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="forecasting-tab" data-bs-toggle="tab" data-bs-target="#forecasting" type="button" role="tab" aria-controls="forecasting" aria-selected="false">
+                <i class="fas fa-chart-line me-2"></i>Forecasting
+            </button>
+        </li>
+    </ul>
 
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-success shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                Available Components</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ available_components }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-warning shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                Pending Requests</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ status_data.pending }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-clock fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-info shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                Total Requests</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                {{ status_data.pending|add:status_data.approved|add:status_data.rejected|add:status_data.returned }}
+    <!-- Tab Content -->
+    <div class="tab-content" id="analyticsTabsContent">
+        <!-- Overview Tab -->
+        <div class="tab-pane fade show active" id="overview" role="tabpanel" aria-labelledby="overview-tab">
+            <!-- Summary Cards -->
+            <div class="row mb-4">
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-primary shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                        Total Components</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_components }}</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-microchip fa-2x text-gray-300"></i>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-auto">
-                            <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-success shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                        Available Components</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ available_components }}</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-warning shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                        Pending Requests</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ status_data.pending }}</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-clock fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-info shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                        Total Requests</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                        {{ status_data.pending|add:status_data.approved|add:status_data.rejected|add:status_data.returned }}
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="row">
+                <!-- Inventory Status -->
+                <div class="col-xl-6 col-lg-6 mb-4">
+                    <div class="card shadow h-100">
+                        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                            <h6 class="m-0 font-weight-bold text-primary">Inventory Status</h6>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="inventoryFilter" data-bs-toggle="dropdown">
+                                    <i class="fas fa-filter"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="" data-filter="all">All Time</a></li>
+                                    <li><a class="dropdown-item" href="" data-filter="month">Last 30 Days</a></li>
+                                    <li><a class="dropdown-item" href="" data-filter="week">Last 7 Days</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="inventoryChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Request Status Distribution -->
+                <div class="col-xl-6 col-lg-6 mb-4">
+                    <div class="card shadow h-100">
+                        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                            <h6 class="m-0 font-weight-bold text-primary">Request Status Distribution</h6>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="statusFilter" data-bs-toggle="dropdown">
+                                    <i class="fas fa-filter"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="" data-filter="all">All Time</a></li>
+                                    <li><a class="dropdown-item" href="" data-filter="month">Last 30 Days</a></li>
+                                    <li><a class="dropdown-item" href="" data-filter="week">Last 7 Days</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="statusChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Request Timeline -->
+                <div class="col-xl-12 col-lg-12 mb-4">
+                    <div class="card shadow h-100">
+                        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                            <h6 class="m-0 font-weight-bold text-primary">Request Timeline</h6>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="timelineFilter" data-bs-toggle="dropdown">
+                                    <i class="fas fa-filter"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="" data-filter="month">Last 30 Days</a></li>
+                                    <li><a class="dropdown-item" href="" data-filter="week">Last 7 Days</a></li>
+                                    <li><a class="dropdown-item" href="" data-filter="day">Today</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="timelineChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top Requested Components -->
+                <div class="col-xl-6 col-lg-6 mb-4">
+                    <div class="card shadow h-100">
+                        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                            <h6 class="m-0 font-weight-bold text-primary">Top Requested Components</h6>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="topComponentsFilter" data-bs-toggle="dropdown">
+                                    <i class="fas fa-filter"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="" data-filter="all">All Time</a></li>
+                                    <li><a class="dropdown-item" href="" data-filter="month">Last 30 Days</a></li>
+                                    <li><a class="dropdown-item" href="" data-filter="week">Last 7 Days</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="topComponentsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Issue vs Return -->
+                <div class="col-xl-6 col-lg-6 mb-4">
+                    <div class="card shadow h-100">
+                        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                            <h6 class="m-0 font-weight-bold text-primary">Issue vs Return</h6>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="issueReturnFilter" data-bs-toggle="dropdown">
+                                    <i class="fas fa-filter"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="" data-filter="month">Last 30 Days</a></li>
+                                    <li><a class="dropdown-item" href="" data-filter="week">Last 7 Days</a></li>
+                                    <li><a class="dropdown-item" href="" data-filter="day">Today</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="issueReturnChart"></canvas>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Charts Section -->
-    <div class="row">
-        <!-- Inventory Status -->
-        <div class="col-xl-6 col-lg-6 mb-4">
-            <div class="card shadow h-100">
-                <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                    <h6 class="m-0 font-weight-bold text-primary">Inventory Status</h6>
-                    <div class="dropdown">
-                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="inventoryFilter" data-bs-toggle="dropdown">
-                            <i class="fas fa-filter"></i>
-                        </button>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="" data-filter="all">All Time</a></li>
-                            <li><a class="dropdown-item" href="" data-filter="month">Last 30 Days</a></li>
-                            <li><a class="dropdown-item" href="" data-filter="week">Last 7 Days</a></li>
-                        </ul>
+        <!-- Forecasting Tab -->
+        <div class="tab-pane fade" id="forecasting" role="tabpanel" aria-labelledby="forecasting-tab">
+            <div class="row">
+                <div class="col-12 mb-4">
+                    <div class="card shadow h-100">
+                        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                            <h6 class="m-0 font-weight-bold text-primary">Inventory Forecast</h6>
+                            <div class="d-flex gap-2">
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="forecastType" data-bs-toggle="dropdown">
+                                        <i class="fas fa-chart-line"></i> Forecast Type
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item active" href="#" data-type="combined">Combined Forecast</a></li>
+                                        <li><a class="dropdown-item" href="#" data-type="usage">Usage-Based</a></li>
+                                        <li><a class="dropdown-item" href="#" data-type="seasonal">Seasonal</a></li>
+                                        <li><a class="dropdown-item" href="#" data-type="trend">Trend-Based</a></li>
+                                    </ul>
+                                </div>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="forecastFilter" data-bs-toggle="dropdown">
+                                        <i class="fas fa-calendar"></i> Time Period
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item active" href="#" data-period="30">Next 30 Days</a></li>
+                                        <li><a class="dropdown-item" href="#" data-period="90">Next 90 Days</a></li>
+                                        <li><a class="dropdown-item" href="#" data-period="180">Next 180 Days</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <!-- Forecast Summary -->
+                            <div class="alert alert-info mb-3">
+                                <h6 class="alert-heading">Inventory Forecast Summary</h6>
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <div class="mb-2">
+                                            <strong>Current Inventory:</strong>
+                                            <span class="badge bg-primary">{{ available_components }} components</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="mb-2">
+                                            <strong>Forecast Type:</strong>
+                                            <span class="badge bg-info" id="currentForecastType">Combined</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="mb-2">
+                                            <strong>Time Period:</strong>
+                                            <span class="badge bg-info" id="currentPeriod">Next 30 Days</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="mb-2">
+                                            <strong>Confidence:</strong>
+                                            <span class="badge bg-success" id="forecastConfidence">High</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <hr>
+                                <div id="forecastDescription">
+                                    <p class="mb-0">
+                                        <strong>What This Forecast Means:</strong>
+                                        <ul class="mb-0">
+                                            <li><i class="fas fa-chart-line text-primary"></i> <strong>Usage Patterns (40%):</strong> Based on how often components are typically requested and returned</li>
+                                            <li><i class="fas fa-calendar-alt text-success"></i> <strong>Weekly Patterns (30%):</strong> Considers if certain days have higher demand (e.g., more requests on weekdays)</li>
+                                            <li><i class="fas fa-arrow-trend-up text-info"></i> <strong>Growth Trends (30%):</strong> Accounts for increasing or decreasing demand over time</li>
+                                        </ul>
+                                        <div class="mt-2">
+                                            <strong>Key Insights:</strong>
+                                            <ul class="mb-0">
+                                                <li>Helps plan inventory restocking</li>
+                                                <li>Identifies potential shortages in advance</li>
+                                                <li>Optimizes component availability</li>
+                                            </ul>
+                                        </div>
+                                        <div class="mt-2">
+                                            <strong>Recommended Actions:</strong>
+                                            <ul class="mb-0">
+                                                <li><i class="fas fa-check-circle text-success"></i> <strong>Restocking Strategy:</strong> 
+                                                    <ul class="mb-0">
+                                                        <li>Order components when inventory drops below forecasted levels</li>
+                                                        <li>Maintain buffer stock based on forecasted demand</li>
+                                                        <li>Schedule regular inventory reviews based on forecast patterns</li>
+                                                    </ul>
+                                                </li>
+                                                <li><i class="fas fa-clock text-warning"></i> <strong>Demand Management:</strong>
+                                                    <ul class="mb-0">
+                                                        <li>Plan for peak usage days identified in weekly patterns</li>
+                                                        <li>Adjust staff schedules to match forecasted demand</li>
+                                                        <li>Set up automated alerts for low inventory levels</li>
+                                                    </ul>
+                                                </li>
+                                                <li><i class="fas fa-chart-bar text-info"></i> <strong>Long-term Planning:</strong>
+                                                    <ul class="mb-0">
+                                                        <li>Review and adjust inventory levels quarterly based on growth trends</li>
+                                                        <li>Update procurement schedules to match forecasted growth</li>
+                                                        <li>Consider bulk purchasing for components with increasing demand</li>
+                                                    </ul>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        <div class="mt-2">
+                                            <strong>Best Practices:</strong>
+                                            <ul class="mb-0">
+                                                <li><i class="fas fa-lightbulb text-warning"></i> <strong>Inventory Optimization:</strong>
+                                                    <ul class="mb-0">
+                                                        <li>Set minimum stock levels at 20% above forecasted demand</li>
+                                                        <li>Review and update safety stock levels monthly</li>
+                                                        <li>Implement just-in-time ordering for high-turnover items</li>
+                                                    </ul>
+                                                </li>
+                                                <li><i class="fas fa-users text-primary"></i> <strong>Staff Planning:</strong>
+                                                    <ul class="mb-0">
+                                                        <li>Schedule additional staff during forecasted peak periods</li>
+                                                        <li>Train staff to handle increased demand during busy periods</li>
+                                                        <li>Implement cross-training for inventory management tasks</li>
+                                                    </ul>
+                                                </li>
+                                                <li><i class="fas fa-truck text-success"></i> <strong>Procurement Strategy:</strong>
+                                                    <ul class="mb-0">
+                                                        <li>Establish relationships with multiple suppliers</li>
+                                                        <li>Negotiate bulk purchase discounts for high-demand items</li>
+                                                        <li>Set up automatic reorder points based on forecast data</li>
+                                                    </ul>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        <div class="mt-2 alert alert-warning">
+                                            <strong><i class="fas fa-exclamation-triangle"></i> Important Notes:</strong>
+                                            <ul class="mb-0">
+                                                <li>Regularly review and adjust forecasts based on actual usage data</li>
+                                                <li>Consider external factors (e.g., academic calendar, project deadlines)</li>
+                                                <li>Maintain communication with users about component availability</li>
+                                            </ul>
+                                        </div>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="chart-container" style="position: relative; height:400px;">
+                                <canvas id="forecastChart"></canvas>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="card-body">
-                    <canvas id="inventoryChart"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <!-- Request Status Distribution -->
-        <div class="col-xl-6 col-lg-6 mb-4">
-            <div class="card shadow h-100">
-                <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                    <h6 class="m-0 font-weight-bold text-primary">Request Status Distribution</h6>
-                    <div class="dropdown">
-                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="statusFilter" data-bs-toggle="dropdown">
-                            <i class="fas fa-filter"></i>
-                        </button>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="" data-filter="all">All Time</a></li>
-                            <li><a class="dropdown-item" href="" data-filter="month">Last 30 Days</a></li>
-                            <li><a class="dropdown-item" href="" data-filter="week">Last 7 Days</a></li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <canvas id="statusChart"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <!-- Request Timeline -->
-        <div class="col-xl-12 col-lg-12 mb-4">
-            <div class="card shadow h-100">
-                <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                    <h6 class="m-0 font-weight-bold text-primary">Request Timeline</h6>
-                    <div class="dropdown">
-                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="timelineFilter" data-bs-toggle="dropdown">
-                            <i class="fas fa-filter"></i>
-                        </button>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="" data-filter="month">Last 30 Days</a></li>
-                            <li><a class="dropdown-item" href="" data-filter="week">Last 7 Days</a></li>
-                            <li><a class="dropdown-item" href="" data-filter="day">Today</a></li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <canvas id="timelineChart"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <!-- Top Requested Components -->
-        <div class="col-xl-6 col-lg-6 mb-4">
-            <div class="card shadow h-100">
-                <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                    <h6 class="m-0 font-weight-bold text-primary">Top Requested Components</h6>
-                    <div class="dropdown">
-                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="topComponentsFilter" data-bs-toggle="dropdown">
-                            <i class="fas fa-filter"></i>
-                        </button>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="" data-filter="all">All Time</a></li>
-                            <li><a class="dropdown-item" href="" data-filter="month">Last 30 Days</a></li>
-                            <li><a class="dropdown-item" href="" data-filter="week">Last 7 Days</a></li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <canvas id="topComponentsChart"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <!-- Issue vs Return -->
-        <div class="col-xl-6 col-lg-6 mb-4">
-            <div class="card shadow h-100">
-                <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                    <h6 class="m-0 font-weight-bold text-primary">Issue vs Return</h6>
-                    <div class="dropdown">
-                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="issueReturnFilter" data-bs-toggle="dropdown">
-                            <i class="fas fa-filter"></i>
-                        </button>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="" data-filter="month">Last 30 Days</a></li>
-                            <li><a class="dropdown-item" href="" data-filter="week">Last 7 Days</a></li>
-                            <li><a class="dropdown-item" href="" data-filter="day">Today</a></li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <canvas id="issueReturnChart"></canvas>
                 </div>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-// Data from Django context
-const inventoryData = {
-    total: {{ total_components }},
-    available: {{ available_components }},
-    unavailable: {{ unavailable_components }}
-};
+// Initialize Bootstrap tabs
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize all Bootstrap tabs
+    const tabEls = document.querySelectorAll('button[data-bs-toggle="tab"]');
+    tabEls.forEach(function(tabEl) {
+        new bootstrap.Tab(tabEl);
+    });
 
-const statusData = {{ status_data|safe }};
+    // Data from Django context
+    const inventoryData = {
+        total: {{ total_components }},
+        available: {{ available_components }},
+        unavailable: {{ unavailable_components }}
+    };
 
-const dailyRequests = {{ daily_requests|safe }};
-const topComponents = {{ top_components|safe }};
-const dailyIssues = {{ daily_issues|safe }};
-const dailyReturns = {{ daily_returns|safe }};
+    const statusData = {{ status_data|safe }};
+    const dailyRequests = {{ daily_requests|safe }};
+    const topComponents = {{ top_components|safe }};
+    const dailyIssues = {{ daily_issues|safe }};
+    const dailyReturns = {{ daily_returns|safe }};
 
-// Chart.js global configuration
-Chart.defaults.font.family = 'Nunito, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
-Chart.defaults.color = '#858796';
-Chart.defaults.borderColor = '#e3e6f0';
+    // Forecast data
+    const forecastData = {
+        dates: JSON.parse('{{ forecast_dates|safe }}'),
+        current: JSON.parse('{{ current_inventory|safe }}'),
+        combined: JSON.parse('{{ combined_forecast|safe }}'),
+        usage_based: JSON.parse('{{ usage_based_forecast|safe }}'),
+        seasonal: JSON.parse('{{ seasonal_forecast|safe }}'),
+        trend_based: JSON.parse('{{ trend_based_forecast|safe }}')
+    };
 
-// Inventory Status Chart
-const inventoryCtx = document.getElementById('inventoryChart').getContext('2d');
-new Chart(inventoryCtx, {
-    type: 'doughnut',
-    data: {
-        labels: ['Available', 'Unavailable'],
-        datasets: [{
-            data: [inventoryData.available, inventoryData.unavailable],
-            backgroundColor: ['#1cc88a', '#e74a3b'],
-            borderWidth: 1,
-            hoverBackgroundColor: ['#17a673', '#be2617'],
-            hoverBorderColor: "rgba(234, 236, 244, 1)",
-        }]
-    },
-    options: {
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                position: 'bottom',
-                labels: {
-                    padding: 20,
-                    usePointStyle: true,
-                    pointStyle: 'circle'
+    // Chart.js global configuration
+    Chart.defaults.font.family = 'Nunito, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+    Chart.defaults.color = '#858796';
+    Chart.defaults.borderColor = '#e3e6f0';
+
+    // Inventory Status Chart
+    const inventoryCtx = document.getElementById('inventoryChart').getContext('2d');
+    new Chart(inventoryCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Available', 'Unavailable'],
+            datasets: [{
+                data: [inventoryData.available, inventoryData.unavailable],
+                backgroundColor: ['#1cc88a', '#e74a3b'],
+                borderWidth: 1,
+                hoverBackgroundColor: ['#17a673', '#be2617'],
+                hoverBorderColor: "rgba(234, 236, 244, 1)",
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        usePointStyle: true,
+                        pointStyle: 'circle'
+                    }
+                },
+                tooltip: {
+                    backgroundColor: "rgb(255,255,255)",
+                    bodyColor: "#858796",
+                    titleColor: '#6e707e',
+                    titleFontSize: 14,
+                    borderColor: '#dddfeb',
+                    borderWidth: 1,
+                    padding: 15,
+                    displayColors: false,
+                    callbacks: {
+                        label: function(context) {
+                            const value = context.raw;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = ((value / total) * 100).toFixed(1);
+                            return `${context.label}: ${value} (${percentage}%)`;
+                        }
+                    }
                 }
             },
-            tooltip: {
-                backgroundColor: "rgb(255,255,255)",
-                bodyColor: "#858796",
-                titleColor: '#6e707e',
-                titleFontSize: 14,
-                borderColor: '#dddfeb',
+            cutout: '70%'
+        }
+    });
+
+    // Request Status Distribution Chart
+    const statusCtx = document.getElementById('statusChart').getContext('2d');
+    new Chart(statusCtx, {
+        type: 'pie',
+        data: {
+            labels: Object.keys(statusData).map(key => key.charAt(0).toUpperCase() + key.slice(1)),
+            datasets: [{
+                data: Object.values(statusData),
+                backgroundColor: ['#4e73df', '#1cc88a', '#e74a3b', '#f6c23e'],
                 borderWidth: 1,
-                padding: 15,
-                displayColors: false,
-                callbacks: {
-                    label: function(context) {
-                        const value = context.raw;
-                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                        const percentage = ((value / total) * 100).toFixed(1);
-                        return `${context.label}: ${value} (${percentage}%)`;
+                hoverBackgroundColor: ['#2e59d9', '#17a673', '#be2617', '#dda20a'],
+                hoverBorderColor: "rgba(234, 236, 244, 1)",
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        usePointStyle: true,
+                        pointStyle: 'circle'
+                    }
+                },
+                tooltip: {
+                    backgroundColor: "rgb(255,255,255)",
+                    bodyColor: "#858796",
+                    titleColor: '#6e707e',
+                    titleFontSize: 14,
+                    borderColor: '#dddfeb',
+                    borderWidth: 1,
+                    padding: 15,
+                    displayColors: false,
+                    callbacks: {
+                        label: function(context) {
+                            const value = context.raw;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = ((value / total) * 100).toFixed(1);
+                            return `${context.label}: ${value} (${percentage}%)`;
+                        }
                     }
                 }
             }
-        },
-        cutout: '70%'
-    }
-});
-
-// Request Status Distribution Chart
-const statusCtx = document.getElementById('statusChart').getContext('2d');
-new Chart(statusCtx, {
-    type: 'pie',
-    data: {
-        labels: Object.keys(statusData).map(key => key.charAt(0).toUpperCase() + key.slice(1)),
-        datasets: [{
-            data: Object.values(statusData),
-            backgroundColor: ['#4e73df', '#1cc88a', '#e74a3b', '#f6c23e'],
-            borderWidth: 1,
-            hoverBackgroundColor: ['#2e59d9', '#17a673', '#be2617', '#dda20a'],
-            hoverBorderColor: "rgba(234, 236, 244, 1)",
-        }]
-    },
-    options: {
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                position: 'bottom',
-                labels: {
-                    padding: 20,
-                    usePointStyle: true,
-                    pointStyle: 'circle'
-                }
-            },
-            tooltip: {
-                backgroundColor: "rgb(255,255,255)",
-                bodyColor: "#858796",
-                titleColor: '#6e707e',
-                titleFontSize: 14,
-                borderColor: '#dddfeb',
-                borderWidth: 1,
-                padding: 15,
-                displayColors: false,
-                callbacks: {
-                    label: function(context) {
-                        const value = context.raw;
-                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                        const percentage = ((value / total) * 100).toFixed(1);
-                        return `${context.label}: ${value} (${percentage}%)`;
-                    }
-                }
-            }
         }
-    }
-});
+    });
 
-// Request Timeline Chart
-const timelineCtx = document.getElementById('timelineChart').getContext('2d');
-new Chart(timelineCtx, {
-    type: 'line',
-    data: {
-        labels: dailyRequests.map(item => item.date),
-        datasets: [{
-            label: 'Requests',
-            data: dailyRequests.map(item => item.count),
-            borderColor: '#4e73df',
-            backgroundColor: 'rgba(78, 115, 223, 0.05)',
-            pointBackgroundColor: '#4e73df',
-            pointBorderColor: '#4e73df',
-            pointHoverBackgroundColor: '#2e59d9',
-            pointHoverBorderColor: '#2e59d9',
-            pointRadius: 3,
-            pointHoverRadius: 5,
-            tension: 0.3,
-            fill: true
-        }]
-    },
-    options: {
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                display: false
-            },
-            tooltip: {
-                backgroundColor: "rgb(255,255,255)",
-                bodyColor: "#858796",
-                titleColor: '#6e707e',
-                titleFontSize: 14,
-                borderColor: '#dddfeb',
-                borderWidth: 1,
-                padding: 15,
-                displayColors: false
-            }
-        },
-        scales: {
-            y: {
-                beginAtZero: true,
-                ticks: {
-                    stepSize: 1
-                },
-                grid: {
-                    color: 'rgba(0, 0, 0, 0.05)',
-                    drawBorder: false
-                }
-            },
-            x: {
-                grid: {
-                    display: false,
-                    drawBorder: false
-                }
-            }
-        }
-    }
-});
-
-// Top Requested Components Chart
-const topComponentsCtx = document.getElementById('topComponentsChart').getContext('2d');
-new Chart(topComponentsCtx, {
-    type: 'bar',
-    data: {
-        labels: topComponents.map(item => item.component__name),
-        datasets: [{
-            label: 'Number of Requests',
-            data: topComponents.map(item => item.count),
-            backgroundColor: '#4e73df',
-            hoverBackgroundColor: '#2e59d9',
-            borderColor: '#4e73df',
-            borderWidth: 1
-        }]
-    },
-    options: {
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                display: false
-            },
-            tooltip: {
-                backgroundColor: "rgb(255,255,255)",
-                bodyColor: "#858796",
-                titleColor: '#6e707e',
-                titleFontSize: 14,
-                borderColor: '#dddfeb',
-                borderWidth: 1,
-                padding: 15,
-                displayColors: false
-            }
-        },
-        scales: {
-            y: {
-                beginAtZero: true,
-                ticks: {
-                    stepSize: 1
-                },
-                grid: {
-                    color: 'rgba(0, 0, 0, 0.05)',
-                    drawBorder: false
-                }
-            },
-            x: {
-                grid: {
-                    display: false,
-                    drawBorder: false
-                },
-                ticks: {
-                    maxRotation: 45,
-                    minRotation: 45
-                }
-            }
-        }
-    }
-});
-
-// Issue vs Return Chart
-const issueReturnCtx = document.getElementById('issueReturnChart').getContext('2d');
-new Chart(issueReturnCtx, {
-    type: 'line',
-    data: {
-        labels: dailyIssues.map(item => item.date),
-        datasets: [
-            {
-                label: 'Issues',
-                data: dailyIssues.map(item => item.count),
-                borderColor: '#1cc88a',
-                backgroundColor: 'rgba(28, 200, 138, 0.05)',
-                pointBackgroundColor: '#1cc88a',
-                pointBorderColor: '#1cc88a',
-                pointHoverBackgroundColor: '#17a673',
-                pointHoverBorderColor: '#17a673',
+    // Request Timeline Chart
+    const timelineCtx = document.getElementById('timelineChart').getContext('2d');
+    new Chart(timelineCtx, {
+        type: 'line',
+        data: {
+            labels: dailyRequests.map(item => item.date),
+            datasets: [{
+                label: 'Requests',
+                data: dailyRequests.map(item => item.count),
+                borderColor: '#4e73df',
+                backgroundColor: 'rgba(78, 115, 223, 0.05)',
+                pointBackgroundColor: '#4e73df',
+                pointBorderColor: '#4e73df',
+                pointHoverBackgroundColor: '#2e59d9',
+                pointHoverBorderColor: '#2e59d9',
                 pointRadius: 3,
                 pointHoverRadius: 5,
                 tension: 0.3,
                 fill: true
-            },
-            {
-                label: 'Returns',
-                data: dailyReturns.map(item => item.count),
-                borderColor: '#e74a3b',
-                backgroundColor: 'rgba(231, 74, 59, 0.05)',
-                pointBackgroundColor: '#e74a3b',
-                pointBorderColor: '#e74a3b',
-                pointHoverBackgroundColor: '#be2617',
-                pointHoverBorderColor: '#be2617',
-                pointRadius: 3,
-                pointHoverRadius: 5,
-                tension: 0.3,
-                fill: true
-            }
-        ]
-    },
-    options: {
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                position: 'bottom',
-                labels: {
-                    padding: 20,
-                    usePointStyle: true,
-                    pointStyle: 'circle'
-                }
-            },
-            tooltip: {
-                backgroundColor: "rgb(255,255,255)",
-                bodyColor: "#858796",
-                titleColor: '#6e707e',
-                titleFontSize: 14,
-                borderColor: '#dddfeb',
-                borderWidth: 1,
-                padding: 15,
-                displayColors: false
-            }
+            }]
         },
-        scales: {
-            y: {
-                beginAtZero: true,
-                ticks: {
-                    stepSize: 1
+        options: {
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
                 },
-                grid: {
-                    color: 'rgba(0, 0, 0, 0.05)',
-                    drawBorder: false
+                tooltip: {
+                    backgroundColor: "rgb(255,255,255)",
+                    bodyColor: "#858796",
+                    titleColor: '#6e707e',
+                    titleFontSize: 14,
+                    borderColor: '#dddfeb',
+                    borderWidth: 1,
+                    padding: 15,
+                    displayColors: false
                 }
             },
-            x: {
-                grid: {
-                    display: false,
-                    drawBorder: false
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)',
+                        drawBorder: false
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false,
+                        drawBorder: false
+                    }
                 }
             }
         }
-    }
-});
+    });
 
-// Add filter functionality
-document.querySelectorAll('.dropdown-menu').forEach(menu => {
-    menu.addEventListener('click', function(e) {
-        if (e.target.tagName === 'A') {
-            const filter = e.target.dataset.filter;
-            // Here you would typically make an AJAX call to update the data
-            // For now, we'll just update the button text
-            const button = this.previousElementSibling;
-            button.textContent = e.target.textContent;
+    // Top Requested Components Chart
+    const topComponentsCtx = document.getElementById('topComponentsChart').getContext('2d');
+    new Chart(topComponentsCtx, {
+        type: 'bar',
+        data: {
+            labels: topComponents.map(item => item.component__name),
+            datasets: [{
+                label: 'Number of Requests',
+                data: topComponents.map(item => item.count),
+                backgroundColor: '#4e73df',
+                hoverBackgroundColor: '#2e59d9',
+                borderColor: '#4e73df',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: "rgb(255,255,255)",
+                    bodyColor: "#858796",
+                    titleColor: '#6e707e',
+                    titleFontSize: 14,
+                    borderColor: '#dddfeb',
+                    borderWidth: 1,
+                    padding: 15,
+                    displayColors: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)',
+                        drawBorder: false
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false,
+                        drawBorder: false
+                    },
+                    ticks: {
+                        maxRotation: 45,
+                        minRotation: 45
+                    }
+                }
+            }
         }
+    });
+
+    // Issue vs Return Chart
+    const issueReturnCtx = document.getElementById('issueReturnChart').getContext('2d');
+    new Chart(issueReturnCtx, {
+        type: 'line',
+        data: {
+            labels: dailyIssues.map(item => item.date),
+            datasets: [
+                {
+                    label: 'Issues',
+                    data: dailyIssues.map(item => item.count),
+                    borderColor: '#1cc88a',
+                    backgroundColor: 'rgba(28, 200, 138, 0.05)',
+                    pointBackgroundColor: '#1cc88a',
+                    pointBorderColor: '#1cc88a',
+                    pointHoverBackgroundColor: '#17a673',
+                    pointHoverBorderColor: '#17a673',
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                    tension: 0.3,
+                    fill: true
+                },
+                {
+                    label: 'Returns',
+                    data: dailyReturns.map(item => item.count),
+                    borderColor: '#e74a3b',
+                    backgroundColor: 'rgba(231, 74, 59, 0.05)',
+                    pointBackgroundColor: '#e74a3b',
+                    pointBorderColor: '#e74a3b',
+                    pointHoverBackgroundColor: '#be2617',
+                    pointHoverBorderColor: '#be2617',
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                    tension: 0.3,
+                    fill: true
+                }
+            ]
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        usePointStyle: true,
+                        pointStyle: 'circle'
+                    }
+                },
+                tooltip: {
+                    backgroundColor: "rgb(255,255,255)",
+                    bodyColor: "#858796",
+                    titleColor: '#6e707e',
+                    titleFontSize: 14,
+                    borderColor: '#dddfeb',
+                    borderWidth: 1,
+                    padding: 15,
+                    displayColors: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)',
+                        drawBorder: false
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false,
+                        drawBorder: false
+                    }
+                }
+            }
+        }
+    });
+
+    // Update the forecast chart initialization
+    const forecastCtx = document.getElementById('forecastChart').getContext('2d');
+    const forecastChart = new Chart(forecastCtx, {
+        type: 'line',
+        data: {
+            labels: forecastData.dates,
+            datasets: [
+                {
+                    label: 'Current Inventory',
+                    data: forecastData.current,
+                    borderColor: '#4e73df',
+                    backgroundColor: 'rgba(78, 115, 223, 0.05)',
+                    borderWidth: 2,
+                    fill: true
+                },
+                {
+                    label: 'Combined Forecast',
+                    data: forecastData.combined,
+                    borderColor: '#1cc88a',
+                    backgroundColor: 'rgba(28, 200, 138, 0.05)',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    fill: false
+                },
+                {
+                    label: 'Usage-Based Forecast',
+                    data: forecastData.usage_based,
+                    borderColor: '#f6c23e',
+                    backgroundColor: 'rgba(246, 194, 62, 0.05)',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    fill: false,
+                    hidden: true
+                },
+                {
+                    label: 'Seasonal Forecast',
+                    data: forecastData.seasonal,
+                    borderColor: '#e74a3b',
+                    backgroundColor: 'rgba(231, 74, 59, 0.05)',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    fill: false,
+                    hidden: true
+                },
+                {
+                    label: 'Trend-Based Forecast',
+                    data: forecastData.trend_based,
+                    borderColor: '#36b9cc',
+                    backgroundColor: 'rgba(54, 185, 204, 0.05)',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    fill: false,
+                    hidden: true
+                }
+            ]
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        usePointStyle: true,
+                        pointStyle: 'circle'
+                    }
+                },
+                tooltip: {
+                    backgroundColor: "rgb(255,255,255)",
+                    bodyColor: "#858796",
+                    titleColor: '#6e707e',
+                    titleFontSize: 14,
+                    borderColor: '#dddfeb',
+                    borderWidth: 1,
+                    padding: 15,
+                    displayColors: true,
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.dataset.label}: ${context.raw} components`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        display: false
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: "rgba(0, 0, 0, .05)",
+                    }
+                }
+            }
+        }
+    });
+
+    // Add forecast type selector functionality
+    document.querySelectorAll('#forecastType .dropdown-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            const type = this.dataset.type;
+            
+            // Update active state
+            document.querySelectorAll('#forecastType .dropdown-item').forEach(i => i.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Update button text
+            document.querySelector('#forecastType .dropdown-toggle').innerHTML = 
+                `<i class="fas fa-chart-line"></i> ${this.textContent}`;
+            
+            // Update forecast type badge
+            document.getElementById('currentForecastType').textContent = this.textContent;
+            
+            // Show/hide datasets based on selection
+            forecastChart.data.datasets.forEach(dataset => {
+                if (type === 'combined') {
+                    dataset.hidden = dataset.label !== 'Current Inventory' && 
+                                   dataset.label !== 'Combined Forecast';
+                } else {
+                    dataset.hidden = dataset.label !== 'Current Inventory' && 
+                                   !dataset.label.includes(type.charAt(0).toUpperCase() + type.slice(1));
+                }
+            });
+            
+            // Update forecast description
+            const descriptions = {
+                'combined': 'The combined forecast provides the most accurate prediction by considering historical usage patterns, seasonal variations, and long-term trends.',
+                'usage': 'Usage-based forecast predicts inventory levels based on historical component usage patterns and average daily consumption.',
+                'seasonal': 'Seasonal forecast analyzes patterns based on days of the week and identifies recurring usage patterns.',
+                'trend': 'Trend-based forecast uses linear regression to identify long-term inventory trends and patterns.'
+            };
+            
+            document.getElementById('forecastDescription').innerHTML = 
+                `<p class="mb-0">${descriptions[type]}</p>`;
+            
+            // Update confidence level
+            const confidence = {
+                'combined': 'High',
+                'usage': 'Medium',
+                'seasonal': 'Medium',
+                'trend': 'Low'
+            };
+            
+            document.getElementById('forecastConfidence').textContent = confidence[type];
+            document.getElementById('forecastConfidence').className = 
+                `badge bg-${confidence[type].toLowerCase() === 'high' ? 'success' : 
+                            confidence[type].toLowerCase() === 'medium' ? 'warning' : 'danger'}`;
+            
+            forecastChart.update();
+        });
+    });
+
+    // Add forecast filter functionality
+    document.querySelectorAll('.dropdown-menu').forEach(menu => {
+        menu.addEventListener('click', function(e) {
+            if (e.target.tagName === 'A') {
+                const filter = e.target.dataset.filter;
+                // Here you would typically make an AJAX call to update the data
+                // For now, we'll just update the button text
+                const button = this.previousElementSibling;
+                button.textContent = e.target.textContent;
+            }
+        });
     });
 });
 </script>
@@ -596,5 +940,4 @@ document.querySelectorAll('.dropdown-menu').forEach(menu => {
     }
 }
 </style>
-{% endblock %}
 {% endblock %} 

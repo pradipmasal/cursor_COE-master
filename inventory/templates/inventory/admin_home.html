@@ -282,186 +282,431 @@
 
                 <!-- Analytics Tab -->
                 <div class="tab-pane fade" id="analytics" role="tabpanel" aria-labelledby="analytics-tab">
-                    <div class="row">
-                        <!-- Summary Cards -->
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card border-left-primary shadow h-100 py-2">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                                Total Components</div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_components }}</div>
-                                        </div>
-                                        <div class="col-auto">
-                                            <i class="fas fa-microchip fa-2x text-gray-300"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                    <!-- Analytics Sub-tabs -->
+                    <ul class="nav nav-tabs mb-4" id="analyticsSubTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab" aria-controls="overview" aria-selected="true">
+                                <i class="fas fa-chart-pie me-2"></i>Overview
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="forecast-tab" data-bs-toggle="tab" data-bs-target="#forecast" type="button" role="tab" aria-controls="forecast" aria-selected="false">
+                                <i class="fas fa-chart-line me-2"></i>Forecast
+                            </button>
+                        </li>
+                    </ul>
 
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card border-left-success shadow h-100 py-2">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                                Available Components</div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ available_components }}</div>
+                    <div class="tab-content" id="analyticsSubTabsContent">
+                        <!-- Overview Sub-tab -->
+                        <div class="tab-pane fade show active" id="overview" role="tabpanel" aria-labelledby="overview-tab">
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <div class="card shadow">
+                                        <div class="card-header py-3">
+                                            <h6 class="m-0 font-weight-bold text-primary">Overview</h6>
                                         </div>
-                                        <div class="col-auto">
-                                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-xl-3 col-md-6 mb-4">
+                                                    <div class="card border-left-primary shadow h-100 py-2">
+                                                        <div class="card-body">
+                                                            <div class="row no-gutters align-items-center">
+                                                                <div class="col mr-2">
+                                                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                                                        Total Components</div>
+                                                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_components }}</div>
+                                                                </div>
+                                                                <div class="col-auto">
+                                                                    <i class="fas fa-microchip fa-2x text-gray-300"></i>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-xl-3 col-md-6 mb-4">
+                                                    <div class="card border-left-success shadow h-100 py-2">
+                                                        <div class="card-body">
+                                                            <div class="row no-gutters align-items-center">
+                                                                <div class="col mr-2">
+                                                                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                                                        Available Components</div>
+                                                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ available_components }}</div>
+                                                                </div>
+                                                                <div class="col-auto">
+                                                                    <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-xl-3 col-md-6 mb-4">
+                                                    <div class="card border-left-warning shadow h-100 py-2">
+                                                        <div class="card-body">
+                                                            <div class="row no-gutters align-items-center">
+                                                                <div class="col mr-2">
+                                                                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                                                        Pending Requests</div>
+                                                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ status_data.pending }}</div>
+                                                                </div>
+                                                                <div class="col-auto">
+                                                                    <i class="fas fa-clock fa-2x text-gray-300"></i>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-xl-3 col-md-6 mb-4">
+                                                    <div class="card border-left-info shadow h-100 py-2">
+                                                        <div class="card-body">
+                                                            <div class="row no-gutters align-items-center">
+                                                                <div class="col mr-2">
+                                                                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                                                        Total Requests</div>
+                                                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                                                        {{ status_data.pending|add:status_data.approved|add:status_data.rejected|add:status_data.returned }}
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-auto">
+                                                                    <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
 
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card border-left-warning shadow h-100 py-2">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                                Pending Requests</div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ status_data.pending }}</div>
-                                        </div>
-                                        <div class="col-auto">
-                                            <i class="fas fa-clock fa-2x text-gray-300"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                                            <!-- Analytics Charts -->
+                                            <div class="row">
+                                                <!-- Inventory Status Chart -->
+                                                <div class="col-xl-6 col-lg-6">
+                                                    <div class="card shadow mb-4">
+                                                        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                                            <h6 class="m-0 font-weight-bold text-primary">Inventory Status</h6>
+                                                            <div class="dropdown">
+                                                                <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" id="inventoryDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                                                    <i class="fas fa-filter me-1"></i>Filter
+                                                                </button>
+                                                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="inventoryDropdown">
+                                                                    <li><a class="dropdown-item" href="#" data-filter="all" data-chart="inventory"><i class="fas fa-calendar-alt me-2"></i>All Time</a></li>
+                                                                    <li><a class="dropdown-item" href="#" data-filter="30" data-chart="inventory"><i class="fas fa-calendar-week me-2"></i>Last 30 Days</a></li>
+                                                                    <li><a class="dropdown-item" href="#" data-filter="7" data-chart="inventory"><i class="fas fa-calendar-day me-2"></i>Last 7 Days</a></li>
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                        <div class="card-body">
+                                                            <div class="chart-area">
+                                                                <canvas id="inventoryChart"></canvas>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
 
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card border-left-info shadow h-100 py-2">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                                Total Requests</div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                                {{ status_data.pending|add:status_data.approved|add:status_data.rejected|add:status_data.returned }}
+                                                <!-- Request Status Distribution Chart -->
+                                                <div class="col-xl-6 col-lg-6">
+                                                    <div class="card shadow mb-4">
+                                                        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                                            <h6 class="m-0 font-weight-bold text-primary">Request Status Distribution</h6>
+                                                            <div class="dropdown">
+                                                                <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" id="statusDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                                                    <i class="fas fa-filter me-1"></i>Filter
+                                                                </button>
+                                                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="statusDropdown">
+                                                                    <li><a class="dropdown-item" href="#" data-filter="all" data-chart="status"><i class="fas fa-calendar-alt me-2"></i>All Time</a></li>
+                                                                    <li><a class="dropdown-item" href="#" data-filter="30" data-chart="status"><i class="fas fa-calendar-week me-2"></i>Last 30 Days</a></li>
+                                                                    <li><a class="dropdown-item" href="#" data-filter="7" data-chart="status"><i class="fas fa-calendar-day me-2"></i>Last 7 Days</a></li>
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                        <div class="card-body">
+                                                            <div class="chart-pie">
+                                                                <canvas id="statusChart"></canvas>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="row">
+                                                <!-- Request Timeline Chart -->
+                                                <div class="col-12">
+                                                    <div class="card shadow mb-4">
+                                                        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                                            <h6 class="m-0 font-weight-bold text-primary">Request Timeline</h6>
+                                                            <div class="dropdown">
+                                                                <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" id="timelineDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                                                    <i class="fas fa-filter me-1"></i>Filter
+                                                                </button>
+                                                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="timelineDropdown">
+                                                                    <li><a class="dropdown-item" href="#" data-filter="all" data-chart="timeline"><i class="fas fa-calendar-alt me-2"></i>All Time</a></li>
+                                                                    <li><a class="dropdown-item" href="#" data-filter="30" data-chart="timeline"><i class="fas fa-calendar-week me-2"></i>Last 30 Days</a></li>
+                                                                    <li><a class="dropdown-item" href="#" data-filter="7" data-chart="timeline"><i class="fas fa-calendar-day me-2"></i>Last 7 Days</a></li>
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                        <div class="card-body">
+                                                            <div class="chart-area">
+                                                                <canvas id="timelineChart"></canvas>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Top Requested Components Chart -->
+                                            <div class="row">
+                                                <div class="col-12">
+                                                    <div class="card shadow mb-4">
+                                                        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                                            <h6 class="m-0 font-weight-bold text-primary">Top Requested Components</h6>
+                                                            <div class="dropdown">
+                                                                <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" id="topComponentsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                                                    <i class="fas fa-filter me-1"></i>Filter
+                                                                </button>
+                                                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="topComponentsDropdown">
+                                                                    <li><a class="dropdown-item" href="#" data-filter="all" data-chart="topComponents"><i class="fas fa-calendar-alt me-2"></i>All Time</a></li>
+                                                                    <li><a class="dropdown-item" href="#" data-filter="30" data-chart="topComponents"><i class="fas fa-calendar-week me-2"></i>Last 30 Days</a></li>
+                                                                    <li><a class="dropdown-item" href="#" data-filter="7" data-chart="topComponents"><i class="fas fa-calendar-day me-2"></i>Last 7 Days</a></li>
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                        <div class="card-body">
+                                                            <div class="chart-bar">
+                                                                <canvas id="topComponentsChart"></canvas>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Issue vs Return Chart -->
+                                            <div class="row">
+                                                <div class="col-12">
+                                                    <div class="card shadow mb-4">
+                                                        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                                            <h6 class="m-0 font-weight-bold text-primary">Issue vs Return</h6>
+                                                            <div class="dropdown">
+                                                                <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" id="issueReturnDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                                                    <i class="fas fa-filter me-1"></i>Filter
+                                                                </button>
+                                                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="issueReturnDropdown">
+                                                                    <li><a class="dropdown-item" href="#" data-filter="all" data-chart="issueReturn"><i class="fas fa-calendar-alt me-2"></i>All Time</a></li>
+                                                                    <li><a class="dropdown-item" href="#" data-filter="30" data-chart="issueReturn"><i class="fas fa-calendar-week me-2"></i>Last 30 Days</a></li>
+                                                                    <li><a class="dropdown-item" href="#" data-filter="7" data-chart="issueReturn"><i class="fas fa-calendar-day me-2"></i>Last 7 Days</a></li>
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                        <div class="card-body">
+                                                            <div class="chart-area">
+                                                                <canvas id="issueReturnChart"></canvas>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div class="col-auto">
-                                            <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Forecast Sub-tab -->
+                        <div class="tab-pane fade" id="forecast" role="tabpanel" aria-labelledby="forecast-tab">
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="card shadow mb-4">
+                                        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                            <h6 class="m-0 font-weight-bold text-primary">Forecasting</h6>
+                                            <div class="d-flex gap-2">
+                                                <button class="btn btn-sm btn-outline-primary" id="refreshForecast">
+                                                    <i class="fas fa-sync-alt me-1"></i>Refresh
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="card-body">
+                                            <!-- Forecast Type Selector -->
+                                            <div class="row mb-4">
+                                                <div class="col-md-4">
+                                                    <div class="form-group">
+                                                        <label for="forecastType">Forecast Type</label>
+                                                        <select class="form-control" id="forecastType">
+                                                            <option value="demand">Component Demand Forecast</option>
+                                                            <option value="stock">Low Stock Risk Prediction</option>
+                                                            <option value="reorder">Reorder Date Prediction</option>
+                                                            <option value="trend">Usage Trend Forecast</option>
+                                                            <option value="return">Return Delay Prediction</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="form-group">
+                                                        <label for="timePeriod">Time Period</label>
+                                                        <select class="form-control" id="timePeriod">
+                                                            <option value="7">Next 7 Days</option>
+                                                            <option value="30">Next 30 Days</option>
+                                                            <option value="90">Next 90 Days</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="form-group">
+                                                        <label for="componentFilter">Filter by Component</label>
+                                                        <select class="form-control" id="componentFilter">
+                                                            <option value="all">All Components</option>
+                                                            {% for component in components %}
+                                                            <option value="{{ component.id }}">{{ component.name }}</option>
+                                                            {% endfor %}
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Forecast Results -->
+                                            <div class="row">
+                                                <div class="col-md-8">
+                                                    <div class="card shadow mb-4">
+                                                        <div class="card-body">
+                                                            <div class="chart-container" style="position: relative; height:400px;">
+                                                                <canvas id="forecastChart"></canvas>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="card shadow mb-4">
+                                                        <div class="card-body">
+                                                            <h5 class="card-title">Forecast Summary</h5>
+                                                            <div id="forecastDescription">
+                                                                <!-- Component Demand Forecast -->
+                                                                <div id="demandForecast" class="forecast-type">
+                                                                    <p class="mb-3">
+                                                                        <strong>Component Demand Forecast</strong><br>
+                                                                        <small class="text-muted">Predicts future component requirements based on historical usage patterns.</small>
+                                                                    </p>
+                                                                    <div class="mt-3">
+                                                                        <h6>Key Metrics</h6>
+                                                                        <ul class="list-unstyled">
+                                                                            <li class="mb-2">
+                                                                                <i class="fas fa-chart-line text-primary me-2"></i>
+                                                                                <span id="demandTrendLabel">Demand Growth:</span> <span id="demandTrend">Loading...</span>
+                                                                            </li>
+                                                                            <li class="mb-2">
+                                                                                <i class="fas fa-box text-success me-2"></i>
+                                                                                <span id="demandPeakLabel">Peak Predicted Demand:</span> <span id="demandPeak">Loading...</span>
+                                                                            </li>
+                                                                            <li class="mb-2">
+                                                                                <i class="fas fa-calendar text-warning me-2"></i>
+                                                                                <span id="demandTimelineLabel">Forecast Period:</span> <span id="demandTimeline">Loading...</span>
+                                                                            </li>
+                                                                        </ul>
+                                                                    </div>
+                                                                </div>
+
+                                                                <!-- Low Stock Risk Prediction -->
+                                                                <div id="stockForecast" class="forecast-type d-none">
+                                                                    <p class="mb-3">
+                                                                        <strong>Low Stock Risk Prediction</strong><br>
+                                                                        <small class="text-muted">Identifies components at risk of running out based on current stock and forecasted usage.</small>
+                                                                    </p>
+                                                                    <div class="mt-3">
+                                                                        <h6>Key Metrics</h6>
+                                                                        <ul class="list-unstyled">
+                                                                            <li class="mb-2">
+                                                                                <i class="fas fa-exclamation-circle text-danger me-2"></i>
+                                                                                <span id="stockRiskLabel">Stock Risk Level:</span> <span id="stockRisk">Loading...</span>
+                                                                            </li>
+                                                                            <li class="mb-2">
+                                                                                <i class="fas fa-clock text-warning me-2"></i>
+                                                                                <span id="stockTimelineLabel">Forecast Period:</span> <span id="stockTimeline">Loading...</span>
+                                                                            </li>
+                                                                            <li class="mb-2">
+                                                                                <i class="fas fa-boxes text-info me-2"></i>
+                                                                                <span id="stockRecommendationLabel">Recommendation:</span> <span id="stockRecommendation">Loading...</span>
+                                                                            </li>
+                                                                        </ul>
+                                                                    </div>
+                                                                </div>
+
+                                                                <!-- Reorder Date Prediction -->
+                                                                <div id="reorderForecast" class="forecast-type d-none">
+                                                                    <p class="mb-3">
+                                                                        <strong>Reorder Date Prediction</strong><br>
+                                                                        <small class="text-muted">Estimates optimal reorder dates to maintain inventory levels.</small>
+                                                                    </p>
+                                                                    <div class="mt-3">
+                                                                        <h6>Key Metrics</h6>
+                                                                        <ul class="list-unstyled">
+                                                                            <li class="mb-2">
+                                                                                <i class="fas fa-calendar-day text-primary me-2"></i>
+                                                                                <span id="reorderDateLabel">Recommended Reorder Date:</span> <span id="reorderDate">Loading...</span>
+                                                                            </li>
+                                                                            <li class="mb-2">
+                                                                                <i class="fas fa-box text-success me-2"></i>
+                                                                                <span id="reorderQuantityLabel">Minimum Stock Level:</span> <span id="reorderQuantity">Loading...</span>
+                                                                            </li>
+                                                                            <li class="mb-2">
+                                                                                <i class="fas fa-info-circle text-info me-2"></i>
+                                                                                <span id="reorderNoteLabel">Note:</span> <span id="reorderNote">Loading...</span>
+                                                                            </li>
+                                                                        </ul>
+                                                                    </div>
+                                                                </div>
+
+                                                                <!-- Usage Trend Forecast -->
+                                                                <div id="trendForecast" class="forecast-type d-none">
+                                                                    <p class="mb-3">
+                                                                        <strong>Usage Trend Forecast</strong><br>
+                                                                        <small class="text-muted">Predicts component category usage trends based on historical data.</small>
+                                                                    </p>
+                                                                    <div class="mt-3">
+                                                                        <h6>Key Metrics</h6>
+                                                                        <ul class="list-unstyled">
+                                                                            <li class="mb-2">
+                                                                                <i class="fas fa-arrow-trend-up text-success me-2"></i>
+                                                                                <span id="trendGrowthLabel">Usage Growth:</span> <span id="trendGrowth">Loading...</span>
+                                                                            </li>
+                                                                            <li class="mb-2">
+                                                                                <i class="fas fa-calendar-week text-primary me-2"></i>
+                                                                                <span id="trendPeriodLabel">Trend Period:</span> <span id="trendPeriod">Loading...</span>
+                                                                            </li>
+                                                                            <li class="mb-2">
+                                                                                <i class="fas fa-lightbulb text-warning me-2"></i>
+                                                                                <span id="trendInsightLabel">Insight:</span> <span id="trendInsight">Loading...</span>
+                                                                            </li>
+                                                                        </ul>
+                                                                    </div>
+                                                                </div>
+
+                                                                <!-- Return Delay Prediction -->
+                                                                <div id="returnForecast" class="forecast-type d-none">
+                                                                    <p class="mb-3">
+                                                                        <strong>Return Delay Prediction</strong><br>
+                                                                        <small class="text-muted">Predicts potential late returns based on user behavior patterns.</small>
+                                                                    </p>
+                                                                    <div class="mt-3">
+                                                                        <h6>Key Metrics</h6>
+                                                                        <ul class="list-unstyled">
+                                                                            <li class="mb-2">
+                                                                                <i class="fas fa-user-clock text-warning me-2"></i>
+                                                                                <span id="returnProbabilityLabel">Late Return Probability:</span> <span id="returnProbability">Loading...</span>
+                                                                            </li>
+                                                                            <li class="mb-2">
+                                                                                <i class="fas fa-calendar-times text-danger me-2"></i>
+                                                                                <span id="returnDelayLabel">Expected Delay:</span> <span id="returnDelay">Loading...</span>
+                                                                            </li>
+                                                                            <li class="mb-2">
+                                                                                <i class="fas fa-exclamation-circle text-info me-2"></i>
+                                                                                <span id="returnActionLabel">Action:</span> <span id="returnAction">Loading...</span>
+                                                                            </li>
+                                                                        </ul>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <!-- Inventory Status -->
-                        <div class="col-xl-6 col-lg-6 mb-4">
-                            <div class="card shadow h-100">
-                                <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                                    <h6 class="m-0 font-weight-bold text-primary">Inventory Status</h6>
-                                    <div class="dropdown">
-                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="inventoryFilter" data-bs-toggle="dropdown" aria-expanded="false">
-                                            <i class="fas fa-filter"></i>
-                                        </button>
-                                        <ul class="dropdown-menu">
-                                            <li><a class="dropdown-item" href="#" data-filter="all" data-chart="inventory">All Time</a></li>
-                                            <li><a class="dropdown-item" href="#" data-filter="month" data-chart="inventory">Last 30 Days</a></li>
-                                            <li><a class="dropdown-item" href="#" data-filter="week" data-chart="inventory">Last 7 Days</a></li>
-                                        </ul>
-                                    </div>
-                                </div>
-                                <div class="card-body">
-                                    <canvas id="inventoryChart"></canvas>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Request Status Distribution -->
-                        <div class="col-xl-6 col-lg-6 mb-4">
-                            <div class="card shadow h-100">
-                                <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                                    <h6 class="m-0 font-weight-bold text-primary">Request Status Distribution</h6>
-                                    <div class="dropdown">
-                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="statusFilter" data-bs-toggle="dropdown" aria-expanded="false">
-                                            <i class="fas fa-filter"></i>
-                                        </button>
-                                        <ul class="dropdown-menu">
-                                            <li><a class="dropdown-item" href="#" data-filter="all" data-chart="status">All Time</a></li>
-                                            <li><a class="dropdown-item" href="#" data-filter="month" data-chart="status">Last 30 Days</a></li>
-                                            <li><a class="dropdown-item" href="#" data-filter="week" data-chart="status">Last 7 Days</a></li>
-                                        </ul>
-                                    </div>
-                                </div>
-                                <div class="card-body">
-                                    <canvas id="statusChart"></canvas>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Request Timeline -->
-                        <div class="col-xl-12 col-lg-12 mb-4">
-                            <div class="card shadow h-100">
-                                <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                                    <h6 class="m-0 font-weight-bold text-primary">Request Timeline</h6>
-                                    <div class="dropdown">
-                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="timelineFilter" data-bs-toggle="dropdown" aria-expanded="false">
-                                            <i class="fas fa-filter"></i>
-                                        </button>
-                                        <ul class="dropdown-menu">
-                                            <li><a class="dropdown-item" href="#" data-filter="month" data-chart="timeline">Last 30 Days</a></li>
-                                            <li><a class="dropdown-item" href="#" data-filter="week" data-chart="timeline">Last 7 Days</a></li>
-                                            <li><a class="dropdown-item" href="#" data-filter="day" data-chart="timeline">Today</a></li>
-                                        </ul>
-                                    </div>
-                                </div>
-                                <div class="card-body">
-                                    <canvas id="timelineChart"></canvas>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Top Requested Components -->
-                        <div class="col-xl-6 col-lg-6 mb-4">
-                            <div class="card shadow h-100">
-                                <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                                    <h6 class="m-0 font-weight-bold text-primary">Top Requested Components</h6>
-                                    <div class="dropdown">
-                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="topComponentsFilter" data-bs-toggle="dropdown" aria-expanded="false">
-                                            <i class="fas fa-filter"></i>
-                                        </button>
-                                        <ul class="dropdown-menu">
-                                            <li><a class="dropdown-item" href="#" data-filter="all" data-chart="topComponents">All Time</a></li>
-                                            <li><a class="dropdown-item" href="#" data-filter="month" data-chart="topComponents">Last 30 Days</a></li>
-                                            <li><a class="dropdown-item" href="#" data-filter="week" data-chart="topComponents">Last 7 Days</a></li>
-                                        </ul>
-                                    </div>
-                                </div>
-                                <div class="card-body">
-                                    <canvas id="topComponentsChart"></canvas>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Issue vs Return -->
-                        <div class="col-xl-6 col-lg-6 mb-4">
-                            <div class="card shadow h-100">
-                                <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                                    <h6 class="m-0 font-weight-bold text-primary">Issue vs Return</h6>
-                                    <div class="dropdown">
-                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="issueReturnFilter" data-bs-toggle="dropdown" aria-expanded="false">
-                                            <i class="fas fa-filter"></i>
-                                        </button>
-                                        <ul class="dropdown-menu">
-                                            <li><a class="dropdown-item" href="#" data-filter="month" data-chart="issueReturn">Last 30 Days</a></li>
-                                            <li><a class="dropdown-item" href="#" data-filter="week" data-chart="issueReturn">Last 7 Days</a></li>
-                                            <li><a class="dropdown-item" href="#" data-filter="day" data-chart="issueReturn">Today</a></li>
-                                        </ul>
-                                    </div>
-                                </div>
-                                <div class="card-body">
-                                    <canvas id="issueReturnChart"></canvas>
                                 </div>
                             </div>
                         </div>
@@ -727,6 +972,50 @@ a {
 .card-title {
     margin-bottom: 0;
     color: #5a5c69;
+}
+
+.forecast-type {
+    transition: all 0.3s ease;
+}
+
+.alert {
+    border-left: 4px solid;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.alert-info {
+    border-left-color: #17a2b8;
+}
+
+.alert-warning {
+    border-left-color: #ffc107;
+}
+
+.alert-success {
+    border-left-color: #28a745;
+}
+
+.alert-primary {
+    border-left-color: #007bff;
+}
+
+.alert-danger {
+    border-left-color: #dc3545;
+}
+
+.chart-container {
+    position: relative;
+    height: 400px;
+}
+
+.list-unstyled li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #eee;
+}
+
+.list-unstyled li:last-child {
+    border-bottom: none;
 }
 </style>
 
@@ -1132,6 +1421,217 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         });
+
+        // Forecast Type Selector Functionality
+        const forecastTypeSelect = document.getElementById('forecastType');
+        const forecastTypes = document.querySelectorAll('.forecast-type');
+        const timePeriodSelect = document.getElementById('timePeriod');
+        const componentFilter = document.getElementById('componentFilter');
+        let forecastChart = null;
+
+        // Initialize the forecast chart
+        function initializeForecastChart() {
+            const ctx = document.getElementById('forecastChart').getContext('2d');
+            forecastChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: []
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true,
+                                pointStyle: 'circle'
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: "rgb(255,255,255)",
+                            bodyColor: "#858796",
+                            titleColor: '#6e707e',
+                            titleFontSize: 14,
+                            borderColor: '#dddfeb',
+                            borderWidth: 1,
+                            padding: 15,
+                            displayColors: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${context.raw}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)',
+                                drawBorder: false
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false,
+                                drawBorder: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Fetch forecast data from the server
+        async function fetchForecastData(type, days) {
+            try {
+                const response = await fetch(`/api/forecast/?type=${type}&days=${days}`);
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return await response.json();
+            } catch (error) {
+                console.error('Error fetching forecast data:', error);
+                return null;
+            }
+        }
+
+        // Update forecast chart based on selected type and time period
+        async function updateForecastChart(type, days) {
+            const data = await fetchForecastData(type, days);
+            if (!data) return;
+
+            // Clear existing datasets
+            forecastChart.data.datasets = [];
+            forecastChart.data.labels = data.labels;
+
+            // Add datasets based on forecast type
+            switch (type) {
+                case 'demand':
+                    forecastChart.data.datasets = [
+                        {
+                            label: 'Current Inventory',
+                            data: data.current_inventory,
+                            borderColor: '#4e73df',
+                            backgroundColor: 'rgba(78, 115, 223, 0.05)',
+                            fill: true
+                        },
+                        {
+                            label: 'Predicted Demand',
+                            data: data.predicted_demand,
+                            borderColor: '#1cc88a',
+                            backgroundColor: 'rgba(28, 200, 138, 0.05)',
+                            borderDash: [5, 5],
+                            fill: true
+                        }
+                    ];
+                    break;
+
+                case 'stock':
+                    forecastChart.data.datasets = [
+                        {
+                            label: 'Current Stock',
+                            data: data.current_stock,
+                            borderColor: '#4e73df',
+                            backgroundColor: 'rgba(78, 115, 223, 0.05)',
+                            fill: true
+                        },
+                        {
+                            label: 'Minimum Stock Level',
+                            data: data.min_stock_level,
+                            borderColor: '#e74a3b',
+                            backgroundColor: 'rgba(231, 74, 59, 0.05)',
+                            borderDash: [5, 5],
+                            fill: true
+                        }
+                    ];
+                    break;
+
+                case 'reorder':
+                    forecastChart.data.datasets = [
+                        {
+                            label: 'Current Stock',
+                            data: data.current_stock,
+                            borderColor: '#4e73df',
+                            backgroundColor: 'rgba(78, 115, 223, 0.05)',
+                            fill: true
+                        },
+                        {
+                            label: 'Reorder Point',
+                            data: data.reorder_point,
+                            borderColor: '#f6c23e',
+                            backgroundColor: 'rgba(246, 194, 62, 0.05)',
+                            borderDash: [5, 5],
+                            fill: true
+                        }
+                    ];
+                    break;
+
+                case 'trend':
+                    forecastChart.data.datasets = data.categories.map(category => ({
+                        label: category.name,
+                        data: category.usage,
+                        borderColor: category.color,
+                        backgroundColor: `${category.color}20`,
+                        fill: true
+                    }));
+                    break;
+
+                case 'return':
+                    forecastChart.data.datasets = [
+                        {
+                            label: 'Return Probability',
+                            data: data.return_probability,
+                            borderColor: '#36b9cc',
+                            backgroundColor: 'rgba(54, 185, 204, 0.05)',
+                            fill: true
+                        }
+                    ];
+                    break;
+            }
+
+            forecastChart.update();
+        }
+
+        // Event listeners for forecast type and time period changes
+        forecastTypeSelect.addEventListener('change', function() {
+            const selectedType = this.value;
+            
+            // Hide all forecast types
+            forecastTypes.forEach(type => type.classList.add('d-none'));
+            
+            // Show selected forecast type
+            document.getElementById(`${selectedType}Forecast`).classList.remove('d-none');
+            
+            // Update chart
+            updateForecastChart(selectedType, timePeriodSelect.value);
+        });
+
+        timePeriodSelect.addEventListener('change', function() {
+            const type = forecastTypeSelect.value;
+            const days = this.value;
+            updateForecastChart(type, days);
+        });
+
+        componentFilter.addEventListener('change', function() {
+            const type = forecastTypeSelect.value;
+            const componentId = this.value;
+            updateForecastChart(type, timePeriodSelect.value);
+        });
+
+        // Initialize the chart when the analytics tab is shown
+        document.getElementById('analytics-tab').addEventListener('shown.bs.tab', function() {
+            if (!forecastChart) {
+                initializeForecastChart();
+                const initialType = forecastTypeSelect.value;
+                const initialDays = timePeriodSelect.value;
+                updateForecastChart(initialType, initialDays);
+            }
+        });
+
     });
 
     // --- ISSUED COMPONENTS SEARCH ---
@@ -1203,6 +1703,185 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log(`Filter changed for ${chart} to ${filter}`);
         });
     });
+
+    // Initialize forecast chart
+    const forecastCtx = document.getElementById('forecastChart').getContext('2d');
+    let forecastChart = new Chart(forecastCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: []
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        usePointStyle: true,
+                        pointStyle: 'circle'
+                    }
+                },
+                tooltip: {
+                    backgroundColor: "rgb(255,255,255)",
+                    bodyColor: "#858796",
+                    titleColor: '#6e707e',
+                    titleFontSize: 14,
+                    borderColor: '#dddfeb',
+                    borderWidth: 1,
+                    padding: 15,
+                    displayColors: false,
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.dataset.label}: ${context.raw}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)',
+                        drawBorder: false
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false,
+                        drawBorder: false
+                    }
+                }
+            }
+        }
+    });
+
+    // Forecast type selector functionality
+    const forecastTypeSelect = document.getElementById('forecastType');
+    const timePeriodSelect = document.getElementById('timePeriod');
+    const componentFilter = document.getElementById('componentFilter');
+    const forecastTypes = document.querySelectorAll('.forecast-type');
+    const exportButton = document.getElementById('exportForecast');
+    const refreshButton = document.getElementById('refreshForecast');
+
+    // Function to update forecast data
+    async function updateForecastData() {
+        const type = forecastTypeSelect.value;
+        const days = timePeriodSelect.value;
+        const componentId = componentFilter.value;
+
+        try {
+            // Show loading state
+            forecastChart.data.labels = ['Loading...'];
+            forecastChart.data.datasets = [{
+                label: 'Loading',
+                data: [0],
+                borderColor: '#4e73df',
+                backgroundColor: 'rgba(78, 115, 223, 0.05)'
+            }];
+            forecastChart.update();
+
+            // Fetch data from server
+            const response = await fetch(`/api/forecast/?type=${type}&days=${days}&component=${componentId}`);
+            const data = await response.json();
+
+            // Update chart
+            forecastChart.data.labels = data.labels;
+            forecastChart.data.datasets = data.datasets;
+            forecastChart.update();
+
+            // Update summary metrics
+            updateForecastSummary(type, data.summary);
+        } catch (error) {
+            console.error('Error fetching forecast data:', error);
+            // Show error state
+            forecastChart.data.labels = ['Error'];
+            forecastChart.data.datasets = [{
+                label: 'Error',
+                data: [0],
+                borderColor: '#e74a3b',
+                backgroundColor: 'rgba(231, 74, 59, 0.05)'
+            }];
+            forecastChart.update();
+        }
+    }
+
+    // Function to update forecast summary
+    function updateForecastSummary(type, summary) {
+        const elements = {
+            demand: {
+                trend: document.getElementById('demandTrend'),
+                peak: document.getElementById('demandPeak'),
+                timeline: document.getElementById('demandTimeline')
+            },
+            stock: {
+                risk: document.getElementById('stockRisk'),
+                timeline: document.getElementById('stockTimeline'),
+                recommendation: document.getElementById('stockRecommendation')
+            },
+            reorder: {
+                date: document.getElementById('reorderDate'),
+                quantity: document.getElementById('reorderQuantity'),
+                note: document.getElementById('reorderNote')
+            },
+            trend: {
+                growth: document.getElementById('trendGrowth'),
+                period: document.getElementById('trendPeriod'),
+                insight: document.getElementById('trendInsight')
+            },
+            return: {
+                probability: document.getElementById('returnProbability'),
+                delay: document.getElementById('returnDelay'),
+                action: document.getElementById('returnAction')
+            }
+        };
+
+        if (elements[type]) {
+            Object.keys(elements[type]).forEach(key => {
+                if (elements[type][key] && summary[key]) {
+                    elements[type][key].textContent = summary[key];
+                }
+            });
+        }
+    }
+
+    // Event listeners
+    forecastTypeSelect.addEventListener('change', function() {
+        const selectedType = this.value;
+        
+        // Hide all forecast types
+        forecastTypes.forEach(type => type.classList.add('d-none'));
+        
+        // Show selected forecast type
+        document.getElementById(`${selectedType}Forecast`).classList.remove('d-none');
+        
+        // Update data
+        updateForecastData();
+    });
+
+    timePeriodSelect.addEventListener('change', updateForecastData);
+    componentFilter.addEventListener('change', updateForecastData);
+    refreshButton.addEventListener('click', updateForecastData);
+
+    exportButton.addEventListener('click', function() {
+        const type = forecastTypeSelect.value;
+        const days = timePeriodSelect.value;
+        const componentId = componentFilter.value;
+        
+        // Create export URL
+        const exportUrl = `/api/forecast/export/?type=${type}&days=${days}&component=${componentId}`;
+        
+        // Trigger download
+        window.location.href = exportUrl;
+    });
+
+    // Initialize forecast data
+    updateForecastData();
 });
 </script>
 {% endblock %}

@@ -27,6 +27,7 @@ urlpatterns = [
     # API endpoints
     path('api/search-students/', views.search_students, name='search_students'),
     path('api/search-components/', views.search_components, name='search_components'),
+    path('api/forecast/', views.api_forecast, name='api_forecast'),
     
     # Password Reset URLs
     path('password-reset/', 
