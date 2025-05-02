@@ -1,0 +1,164 @@
+{% load custom_filters %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Inventory Report</title>
+    <style type="text/css">
+        @page {
+            size: A4;
+            margin: 1cm;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 2cm;
+        }
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 1cm;
+        }
+        .section {
+            margin-bottom: 1cm;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 0.5cm;
+            color: #2c3e50;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1cm;
+            page-break-inside: auto;
+        }
+        tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #4e73df;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        .stats-box {
+            display: table;
+            width: 100%;
+            margin-bottom: 1cm;
+        }
+        .stat-item {
+            display: table-cell;
+            text-align: center;
+            padding: 10px;
+            background-color: #f8f9fc;
+            border: 1px solid #ddd;
+            margin: 0 5px;
+        }
+        .stat-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #4e73df;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 class="title">Inventory Report</h1>
+    </div>
+
+    <div class="section">
+        <div class="stats-box">
+            <div class="stat-item">
+                <div class="stat-label">Total Components</div>
+                <div class="stat-value">{{ components|length }}</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Total Requests</div>
+                <div class="stat-value">{{ total_requests }}</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Pending Requests</div>
+                <div class="stat-value">{{ pending_requests }}</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Approved Requests</div>
+                <div class="stat-value">{{ approved_requests }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2 class="section-title">Component Details</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Component Name</th>
+                    <th>Description</th>
+                    <th>Barcode</th>
+                    <th>Quantity</th>
+                    <th>Status</th>
+                    <th>Total Requests</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for component in components %}
+                <tr>
+                    <td>{{ component.name }}</td>
+                    <td>{{ component.description }}</td>
+                    <td>{{ component.barcode|default:"No barcode" }}</td>
+                    <td>{{ component_stats|get_item:component.id|get_item:"issued" }}/{{ component_stats|get_item:component.id|get_item:"total" }}</td>
+                    <td>{% if component.available %}Available{% else %}Unavailable{% endif %}</td>
+                    <td>{{ component.issuerequest_set.count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2 class="section-title">Request Details</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Component</th>
+                    <th>Requested By</th>
+                    <th>Quantity</th>
+                    <th>Status</th>
+                    <th>Request Date</th>
+                    <th>Issue Date</th>
+                    <th>Return Deadline</th>
+                    <th>Return Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for request in requests %}
+                <tr>
+                    <td>{{ request.component.name }}</td>
+                    <td>{{ request.student.username }}</td>
+                    <td>{{ request.quantity }}</td>
+                    <td>{{ request.status|title }}</td>
+                    <td>{{ request.request_date|date:"F d, Y, h:i A" }}</td>
+                    <td>{% if request.issue_date %}{{ request.issue_date|date:"F d, Y, h:i A" }}{% else %}-{% endif %}</td>
+                    <td>{% if request.return_deadline %}{{ request.return_deadline|date:"F d, Y, h:i A" }}{% else %}-{% endif %}</td>
+                    <td>{% if request.return_date %}{{ request.return_date|date:"F d, Y, h:i A" }}{% else %}-{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html> 

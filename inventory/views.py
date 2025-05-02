@@ -16,6 +16,9 @@ import os
 from django.conf import settings
 import json
 from django.db import transaction
+from django.template.loader import render_to_string
+from xhtml2pdf import pisa
+from io import BytesIO
 
 
 
@@ -309,141 +312,30 @@ def generate_report(request):
     })
 
 def generate_pdf_report(components, requests, total_requests, pending_requests, approved_requests, returned_requests, component_stats):
-    from reportlab.lib import colors
-    from reportlab.lib.pagesizes import letter
-    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-    from reportlab.lib.units import inch
-    from io import BytesIO
+    # Render the HTML template with the data
+    html_string = render_to_string('inventory/pdf_report.html', {
+        'components': components,
+        'requests': requests,
+        'total_requests': total_requests,
+        'pending_requests': pending_requests,
+        'approved_requests': approved_requests,
+        'returned_requests': returned_requests,
+        'component_stats': component_stats
+    })
     
     # Create a BytesIO buffer to store the PDF
     buffer = BytesIO()
     
-    # Create the PDF document
-    doc = SimpleDocTemplate(buffer, pagesize=letter)
-    styles = getSampleStyleSheet()
-    
-    # Create custom styles
-    title_style = ParagraphStyle(
-        'CustomTitle',
-        parent=styles['Heading1'],
-        fontSize=24,
-        spaceAfter=30,
-        alignment=1  # Center alignment
+    # Generate PDF
+    pisa_status = pisa.CreatePDF(
+        html_string,
+        dest=buffer,
+        encoding='utf-8'
     )
     
-    heading_style = ParagraphStyle(
-        'CustomHeading',
-        parent=styles['Heading2'],
-        fontSize=16,
-        spaceAfter=12
-    )
-    
-    # Create the content
-    content = []
-    
-    # Add title
-    content.append(Paragraph("Inventory Report", title_style))
-    content.append(Spacer(1, 20))
-    
-    # Add statistics
-    stats_data = [
-        ['Total Components', 'Total Requests', 'Pending Requests', 'Approved Requests'],
-        [str(len(components)), str(total_requests), str(pending_requests), str(approved_requests)]
-    ]
-    
-    stats_table = Table(stats_data, colWidths=[2*inch]*4)
-    stats_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.blue),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 14),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, 1), colors.lightblue),
-        ('TEXTCOLOR', (0, 1), (-1, 1), colors.black),
-        ('FONTNAME', (0, 1), (-1, 1), 'Helvetica'),
-        ('FONTSIZE', (0, 1), (-1, 1), 12),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black)
-    ]))
-    
-    content.append(stats_table)
-    content.append(Spacer(1, 20))
-    
-    # Add Component Details
-    content.append(Paragraph("Component Details", heading_style))
-    
-    component_data = [['Component Name', 'Description', 'Barcode', 'Quantity', 'Status', 'Total Requests']]
-    for component in components:
-        stats = component_stats[component.id]
-        component_data.append([
-            component.name,
-            component.description,
-            component.barcode or 'No barcode',
-            f"{stats['issued']}/{stats['total']}",
-            'Available' if component.available else 'Unavailable',
-            str(component.issuerequest_set.count())
-        ])
-    
-    component_table = Table(component_data, colWidths=[1.2*inch, 1.8*inch, 1.2*inch, 1*inch, 1*inch, 1.2*inch])
-    component_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.blue),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 12),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.white),
-        ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
-        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-        ('FONTSIZE', (0, 1), (-1, -1), 10),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black),
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('LEFTPADDING', (0, 0), (-1, -1), 6),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 6),
-    ]))
-    
-    content.append(component_table)
-    content.append(Spacer(1, 20))
-    
-    # Add Request Details
-    content.append(Paragraph("Request Details", heading_style))
-    
-    request_data = [['Component', 'Requested By', 'Quantity', 'Status', 'Request Date', 'Issue Date', 'Return Deadline', 'Return Date']]
-    for request in requests:
-        request_data.append([
-            request.component.name,
-            request.student.username,
-            str(request.quantity),
-            request.status.title(),
-            request.request_date.strftime("%B %d, %Y, %I:%M %p"),
-            request.issue_date.strftime("%B %d, %Y, %I:%M %p") if request.issue_date else "-",
-            request.return_deadline.strftime("%B %d, %Y, %I:%M %p") if request.return_deadline else "-",
-            request.return_date.strftime("%B %d, %Y, %I:%M %p") if request.return_date else "-"
-        ])
-    
-    request_table = Table(request_data, colWidths=[1.2*inch]*8)
-    request_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.blue),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 10),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.white),
-        ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
-        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-        ('FONTSIZE', (0, 1), (-1, -1), 8),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black),
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('LEFTPADDING', (0, 0), (-1, -1), 6),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 6),
-    ]))
-    
-    content.append(request_table)
-    
-    # Build the PDF
-    doc.build(content)
+    # Check if PDF generation was successful
+    if pisa_status.err:
+        return HttpResponse('PDF generation failed', status=500)
     
     # Get the value of the BytesIO buffer
     pdf = buffer.getvalue()

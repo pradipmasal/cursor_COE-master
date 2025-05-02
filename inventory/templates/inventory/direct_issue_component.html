@@ -258,12 +258,9 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('return_deadline').value = defaultDate;
     }
     
-    // Student search functionality
     const studentSearch = document.getElementById('student_search');
     const studentResults = document.getElementById('student_results');
     const selectedStudent = document.getElementById('selected_student');
-    
-    // Component search functionality
     const componentSearch = document.getElementById('component_search');
     const componentResults = document.getElementById('component_results');
     const selectedComponent = document.getElementById('selected_component');
@@ -276,125 +273,103 @@ document.addEventListener('DOMContentLoaded', function() {
     const bulkComponentSearch = document.getElementById('bulk_component_search');
     const bulkComponentResults = document.getElementById('bulk_component_results');
     const selectedComponentsList = document.getElementById('selected_components_list');
-    const selectedComponents = new Map(); // Map to store component ID -> quantity
+    const selectedComponents = new Map();
     
-    // Function to search students
+    // Search students function
     function searchStudents(query) {
         if (query.length < 2) {
             studentResults.style.display = 'none';
             return;
         }
         
-        fetch(`/search-students/?q=${encodeURIComponent(query)}`)
+        fetch(`/api/search-students/?q=${encodeURIComponent(query)}`)
             .then(response => response.json())
             .then(data => {
                 studentResults.innerHTML = '';
-                if (data.length > 0) {
-                    data.forEach(student => {
-                        const item = document.createElement('a');
-                        item.href = '#';
-                        item.className = 'list-group-item list-group-item-action';
-                        item.innerHTML = `${student.username} (${student.email})`;
-                        item.addEventListener('click', function(e) {
-                            e.preventDefault();
-                            selectStudent(student);
-                        });
-                        studentResults.appendChild(item);
+                data.forEach(student => {
+                    const item = document.createElement('a');
+                    item.href = '#';
+                    item.className = 'list-group-item list-group-item-action';
+                    item.textContent = `${student.username} (${student.email})`;
+                    item.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        studentSearch.value = student.username;
+                        studentSearch.classList.add('search-input-selected');
+                        selectedStudent.value = student.id;
+                        studentResults.style.display = 'none';
                     });
-                    studentResults.style.display = 'block';
-                } else {
-                    studentResults.style.display = 'none';
-                }
+                    studentResults.appendChild(item);
+                });
+                studentResults.style.display = data.length ? 'block' : 'none';
             });
     }
     
-    // Function to search components
+    // Search components function
     function searchComponents(query, resultsContainer, callback) {
         if (query.length < 2) {
             resultsContainer.style.display = 'none';
             return;
         }
         
-        fetch(`/search-components/?q=${encodeURIComponent(query)}`)
+        fetch(`/api/search-components/?q=${encodeURIComponent(query)}`)
             .then(response => response.json())
             .then(data => {
                 resultsContainer.innerHTML = '';
-                if (data.length > 0) {
-                    data.forEach(component => {
-                        const item = document.createElement('a');
-                        item.href = '#';
-                        item.className = 'list-group-item list-group-item-action';
-                        item.innerHTML = `${component.name} (Available: ${component.quantity})`;
-                        item.addEventListener('click', function(e) {
-                            e.preventDefault();
-                            callback(component);
-                        });
-                        resultsContainer.appendChild(item);
+                data.forEach(component => {
+                    const item = document.createElement('a');
+                    item.href = '#';
+                    item.className = 'list-group-item list-group-item-action';
+                    item.textContent = `${component.name} (Available: ${component.quantity})`;
+                    item.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        callback(component);
+                        resultsContainer.style.display = 'none';
                     });
-                    resultsContainer.style.display = 'block';
-                } else {
-                    resultsContainer.style.display = 'none';
-                }
+                    resultsContainer.appendChild(item);
+                });
+                resultsContainer.style.display = data.length ? 'block' : 'none';
             });
     }
     
-    // Function to select a student
-    function selectStudent(student) {
-        selectedStudent.value = student.id;
-        studentSearch.value = `${student.username} (${student.email})`;
-        studentSearch.classList.add('search-input-selected');
-        studentResults.style.display = 'none';
-    }
-    
-    // Function to select a component
+    // Select single component
     function selectComponent(component) {
-        selectedComponent.value = component.id;
-        componentSearch.value = `${component.name} (Available: ${component.quantity})`;
+        componentSearch.value = component.name;
         componentSearch.classList.add('search-input-selected');
-        componentResults.style.display = 'none';
-        
-        // Update quantity max
+        selectedComponent.value = component.id;
         quantityInput.max = component.quantity;
-        quantityInput.value = Math.min(parseInt(quantityInput.value) || 1, component.quantity);
     }
     
-    // Function to add component to bulk selection
+    // Add component to bulk issue
     function addBulkComponent(component) {
         if (!selectedComponents.has(component.id)) {
-            selectedComponents.set(component.id, 1);
             const item = document.createElement('div');
-            item.className = 'selected-component-item';
+            item.className = 'list-group-item d-flex justify-content-between align-items-center';
             item.innerHTML = `
-                <div class="d-flex align-items-center">
-                    <span>${component.name} (Available: ${component.quantity})</span>
-                    <input type="number" class="form-control form-control-sm component-quantity" 
-                           min="1" max="${component.quantity}" value="1" 
-                           onchange="updateComponentQuantity(${component.id}, this.value)">
+                ${component.name}
+                <div class="input-group" style="width: 150px;">
+                    <input type="number" class="form-control form-control-sm" min="1" max="${component.quantity}" value="1">
+                    <button class="btn btn-outline-danger btn-sm" type="button">
+                        <i class="fas fa-times"></i>
+                    </button>
                 </div>
-                <i class="fas fa-times remove-selection" onclick="removeBulkComponent(${component.id})"></i>
             `;
-            selectedComponentsList.appendChild(item);
-        }
-        bulkComponentSearch.value = '';
-        bulkComponentResults.style.display = 'none';
-    }
-    
-    // Function to update component quantity
-    window.updateComponentQuantity = function(componentId, quantity) {
-        selectedComponents.set(componentId, parseInt(quantity));
-    };
-    
-    // Function to remove component from bulk selection
-    window.removeBulkComponent = function(componentId) {
-        selectedComponents.delete(componentId);
-        const items = selectedComponentsList.getElementsByClassName('selected-component-item');
-        for (let item of items) {
-            if (item.querySelector('span').textContent.includes(componentId)) {
+            
+            const quantityInput = item.querySelector('input');
+            const removeButton = item.querySelector('button');
+            
+            quantityInput.addEventListener('change', function() {
+                selectedComponents.set(component.id, this.value);
+            });
+            
+            removeButton.addEventListener('click', function() {
+                selectedComponents.delete(component.id);
                 item.remove();
-                break;
-            }
+            });
+            
+            selectedComponentsList.appendChild(item);
+            selectedComponents.set(component.id, 1);
         }
-    };
+    }
     
     // Event listeners for student search
     studentSearch.addEventListener('input', function() {
