@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import login
 from django.contrib import messages
-from django.db.models import Count, Sum
+from django.db.models import Count, Sum, Avg
 from .models import Component, IssueRequest, UserProfile, User
 from .forms import UserRegisterForm, ComponentForm, IssueRequestForm, IssueRequestUpdateForm, DirectIssueComponentForm
 from django.utils import timezone
@@ -15,6 +15,13 @@ from barcode.writer import ImageWriter
 import os
 from django.conf import settings
 import json
+from django.db import transaction
+from django.template.loader import render_to_string
+from xhtml2pdf import pisa
+from io import BytesIO
+import numpy as np
+from sklearn.linear_model import LinearRegression
+from django.views.decorators.http import require_GET
 
 
 
@@ -308,141 +315,30 @@ def generate_report(request):
     })
 
 def generate_pdf_report(components, requests, total_requests, pending_requests, approved_requests, returned_requests, component_stats):
-    from reportlab.lib import colors
-    from reportlab.lib.pagesizes import letter
-    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-    from reportlab.lib.units import inch
-    from io import BytesIO
+    # Render the HTML template with the data
+    html_string = render_to_string('inventory/pdf_report.html', {
+        'components': components,
+        'requests': requests,
+        'total_requests': total_requests,
+        'pending_requests': pending_requests,
+        'approved_requests': approved_requests,
+        'returned_requests': returned_requests,
+        'component_stats': component_stats
+    })
     
     # Create a BytesIO buffer to store the PDF
     buffer = BytesIO()
     
-    # Create the PDF document
-    doc = SimpleDocTemplate(buffer, pagesize=letter)
-    styles = getSampleStyleSheet()
-    
-    # Create custom styles
-    title_style = ParagraphStyle(
-        'CustomTitle',
-        parent=styles['Heading1'],
-        fontSize=24,
-        spaceAfter=30,
-        alignment=1  # Center alignment
+    # Generate PDF
+    pisa_status = pisa.CreatePDF(
+        html_string,
+        dest=buffer,
+        encoding='utf-8'
     )
     
-    heading_style = ParagraphStyle(
-        'CustomHeading',
-        parent=styles['Heading2'],
-        fontSize=16,
-        spaceAfter=12
-    )
-    
-    # Create the content
-    content = []
-    
-    # Add title
-    content.append(Paragraph("Inventory Report", title_style))
-    content.append(Spacer(1, 20))
-    
-    # Add statistics
-    stats_data = [
-        ['Total Components', 'Total Requests', 'Pending Requests', 'Approved Requests'],
-        [str(len(components)), str(total_requests), str(pending_requests), str(approved_requests)]
-    ]
-    
-    stats_table = Table(stats_data, colWidths=[2*inch]*4)
-    stats_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.blue),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 14),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, 1), colors.lightblue),
-        ('TEXTCOLOR', (0, 1), (-1, 1), colors.black),
-        ('FONTNAME', (0, 1), (-1, 1), 'Helvetica'),
-        ('FONTSIZE', (0, 1), (-1, 1), 12),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black)
-    ]))
-    
-    content.append(stats_table)
-    content.append(Spacer(1, 20))
-    
-    # Add Component Details
-    content.append(Paragraph("Component Details", heading_style))
-    
-    component_data = [['Component Name', 'Description', 'Barcode', 'Quantity', 'Status', 'Total Requests']]
-    for component in components:
-        stats = component_stats[component.id]
-        component_data.append([
-            component.name,
-            component.description,
-            component.barcode or 'No barcode',
-            f"{stats['issued']}/{stats['total']}",
-            'Available' if component.available else 'Unavailable',
-            str(component.issuerequest_set.count())
-        ])
-    
-    component_table = Table(component_data, colWidths=[1.2*inch, 1.8*inch, 1.2*inch, 1*inch, 1*inch, 1.2*inch])
-    component_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.blue),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 12),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.white),
-        ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
-        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-        ('FONTSIZE', (0, 1), (-1, -1), 10),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black),
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('LEFTPADDING', (0, 0), (-1, -1), 6),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 6),
-    ]))
-    
-    content.append(component_table)
-    content.append(Spacer(1, 20))
-    
-    # Add Request Details
-    content.append(Paragraph("Request Details", heading_style))
-    
-    request_data = [['Component', 'Requested By', 'Quantity', 'Status', 'Request Date', 'Issue Date', 'Return Deadline', 'Return Date']]
-    for request in requests:
-        request_data.append([
-            request.component.name,
-            request.student.username,
-            str(request.quantity),
-            request.status.title(),
-            request.request_date.strftime("%B %d, %Y, %I:%M %p"),
-            request.issue_date.strftime("%B %d, %Y, %I:%M %p") if request.issue_date else "-",
-            request.return_deadline.strftime("%B %d, %Y, %I:%M %p") if request.return_deadline else "-",
-            request.return_date.strftime("%B %d, %Y, %I:%M %p") if request.return_date else "-"
-        ])
-    
-    request_table = Table(request_data, colWidths=[1.2*inch]*8)
-    request_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.blue),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 10),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.white),
-        ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
-        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-        ('FONTSIZE', (0, 1), (-1, -1), 8),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black),
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('LEFTPADDING', (0, 0), (-1, -1), 6),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 6),
-    ]))
-    
-    content.append(request_table)
-    
-    # Build the PDF
-    doc.build(content)
+    # Check if PDF generation was successful
+    if pisa_status.err:
+        return HttpResponse('PDF generation failed', status=500)
     
     # Get the value of the BytesIO buffer
     pdf = buffer.getvalue()
@@ -520,26 +416,31 @@ def direct_issue_component(request):
         if form.is_valid():
             student = form.cleaned_data['student']
             return_deadline = form.cleaned_data['return_deadline']
-            notes = form.cleaned_data.get('notes', '')
+            notes = form.cleaned_data['notes']
             
-            # Convert return_deadline to timezone-aware datetime
-            if isinstance(return_deadline, date):
-                return_deadline = datetime.combine(return_deadline, datetime.min.time())
-            return_deadline = timezone.make_aware(return_deadline)
-            
-            # Check if bulk issue is requested
+            # Get bulk components data
             bulk_components = request.POST.getlist('bulk_components[]')
             bulk_quantities = request.POST.getlist('bulk_quantities[]')
             
             if bulk_components:
                 # Bulk issue multiple components
                 success_count = 0
-                for i, component_id in enumerate(bulk_components):
-                    try:
-                        component = Component.objects.get(id=component_id)
-                        quantity = int(bulk_quantities[i])
-                        
-                        if quantity <= component.quantity:
+                failed_components = []
+                
+                # Use transaction to ensure atomicity
+                with transaction.atomic():
+                    for i, component_id in enumerate(bulk_components):
+                        try:
+                            # Lock the component row
+                            component = Component.objects.select_for_update().get(id=component_id)
+                            quantity = int(bulk_quantities[i])
+                            
+                            # Check availability and quantity
+                            if not component.available or quantity > component.quantity:
+                                failed_components.append(component.name)
+                                continue
+                            
+                            # Create issue request
                             issue_request = IssueRequest.objects.create(
                                 student=student,
                                 component=component,
@@ -551,18 +452,30 @@ def direct_issue_component(request):
                                 issue_date=timezone.now(),
                                 admin=request.user
                             )
+                            
+                            # Update component quantity and availability
+                            component.quantity -= quantity
+                            if component.quantity <= 0:
+                                component.available = False
+                            component.save()
+                            
                             success_count += 1
-                    except (Component.DoesNotExist, ValueError, IndexError):
-                        continue
+                        except (Component.DoesNotExist, ValueError, IndexError):
+                            continue
                 
                 if success_count > 0:
                     messages.success(request, f'Successfully issued {success_count} components to {student.username}.')
-                else:
+                if failed_components:
+                    messages.warning(request, f'Failed to issue components: {", ".join(failed_components)}')
+                if success_count == 0 and not failed_components:
                     messages.error(request, 'Failed to issue any components.')
             else:
                 # Single component issue
-                issue_request = form.save(admin=request.user)
-                messages.success(request, f'Component {issue_request.component.name} has been issued to {issue_request.student.username}.')
+                try:
+                    issue_request = form.save(admin=request.user)
+                    messages.success(request, f'Component {issue_request.component.name} has been issued to {issue_request.student.username}.')
+                except ValueError as e:
+                    messages.error(request, str(e))
             
             return redirect('home')
     else:
@@ -742,15 +655,13 @@ def analytics_dashboard(request):
     thirty_days_ago = timezone.now() - timedelta(days=30)
     daily_requests = IssueRequest.objects.filter(
         request_date__gte=thirty_days_ago
-    ).extra(
-        select={'date': 'DATE(request_date)'}
-    ).values('date').annotate(count=Count('id')).order_by('date')
+    ).values('request_date').annotate(count=Count('id')).order_by('request_date')
 
     # Format daily requests data
     formatted_daily_requests = []
     for item in daily_requests:
         formatted_daily_requests.append({
-            'date': item['date'].strftime('%Y-%m-%d'),
+            'date': item['request_date'].strftime('%Y-%m-%d'),
             'count': item['count']
         })
 
@@ -764,42 +675,98 @@ def analytics_dashboard(request):
     daily_issues = IssueRequest.objects.filter(
         status='approved',
         issue_date__gte=thirty_days_ago
-    ).extra(
-        select={'date': 'DATE(issue_date)'}
-    ).values('date').annotate(count=Count('id')).order_by('date')
+    ).values('issue_date').annotate(count=Count('id')).order_by('issue_date')
 
     # Format daily issues data
     formatted_daily_issues = []
     for item in daily_issues:
         formatted_daily_issues.append({
-            'date': item['date'].strftime('%Y-%m-%d'),
+            'date': item['issue_date'].strftime('%Y-%m-%d'),
             'count': item['count']
         })
 
     daily_returns = IssueRequest.objects.filter(
         status='returned',
         return_date__gte=thirty_days_ago
-    ).extra(
-        select={'date': 'DATE(return_date)'}
-    ).values('date').annotate(count=Count('id')).order_by('date')
+    ).values('return_date').annotate(count=Count('id')).order_by('return_date')
 
     # Format daily returns data
     formatted_daily_returns = []
     for item in daily_returns:
         formatted_daily_returns.append({
-            'date': item['date'].strftime('%Y-%m-%d'),
+            'date': item['return_date'].strftime('%Y-%m-%d'),
             'count': item['count']
         })
+
+    # Calculate inventory forecast
+    # Get historical inventory data for the last 90 days
+    ninety_days_ago = timezone.now() - timedelta(days=90)
+    daily_inventory = []
+    
+    for i in range(90):
+        date = ninety_days_ago + timedelta(days=i)
+        # Get components that were available on this date
+        available = Component.objects.filter(
+            available=True,
+            created_at__lte=date
+        ).exclude(
+            issuerequest__issue_date__lte=date,
+            issuerequest__return_date__gt=date
+        ).count()
+        daily_inventory.append({
+            'date': date.strftime('%Y-%m-%d'),
+            'count': available
+        })
+
+    # Prepare data for forecasting
+    X = np.array(range(len(daily_inventory))).reshape(-1, 1)
+    y = np.array([item['count'] for item in daily_inventory])
+    
+    # Train linear regression model
+    model = LinearRegression()
+    model.fit(X, y)
+    
+    # Generate forecast for next 30 days
+    forecast_dates = []
+    forecast_values = []
+    current_inventory = []
+    
+    # Calculate average daily change
+    daily_changes = np.diff(y)
+    avg_daily_change = np.mean(daily_changes)
+    
+    # Get current inventory level
+    current_level = available_components
+    
+    for i in range(30):
+        date = timezone.now() + timedelta(days=i)
+        forecast_dates.append(date.strftime('%Y-%m-%d'))
+        # Use both linear regression and average daily change for forecasting
+        linear_prediction = int(model.predict([[len(daily_inventory) + i]])[0])
+        trend_prediction = int(current_level + (avg_daily_change * (i + 1)))
+        # Take the average of both predictions
+        forecast_value = int((linear_prediction + trend_prediction) / 2)
+        # Ensure forecast doesn't go below 0
+        forecast_values.append(max(0, forecast_value))
+        current_inventory.append(current_level)
+
+    # Convert lists to JSON strings for JavaScript
+    forecast_dates_json = json.dumps(forecast_dates)
+    forecast_values_json = json.dumps(forecast_values)
+    current_inventory_json = json.dumps(current_inventory)
 
     context = {
         'total_components': total_components,
         'available_components': available_components,
         'unavailable_components': unavailable_components,
         'status_data': status_data,
-        'daily_requests': formatted_daily_requests,
-        'top_components': list(top_components),
-        'daily_issues': formatted_daily_issues,
-        'daily_returns': formatted_daily_returns,
+        'daily_requests': json.dumps(formatted_daily_requests),
+        'top_components': json.dumps(list(top_components)),
+        'daily_issues': json.dumps(formatted_daily_issues),
+        'daily_returns': json.dumps(formatted_daily_returns),
+        'forecast_dates': forecast_dates_json,
+        'forecast_values': forecast_values_json,
+        'current_inventory': current_inventory_json,
     }
 
     return render(request, 'inventory/analytics.html', context)
@@ -808,10 +775,191 @@ def analytics_dashboard(request):
 def user_dashboard(request, user_id):
     user = get_object_or_404(User, id=user_id)
     my_requests = IssueRequest.objects.filter(student=user)
+    login_user = request.user
 
 
     context = {
         'user': user,
-        'my_requests': my_requests
+        'my_requests': my_requests,
+        'login_user': login_user
     }
     return render(request, 'inventory/user_dashboard.html', context)    
+
+@require_GET
+def api_forecast(request):
+    import numpy as np
+    from datetime import timedelta
+    from django.utils import timezone
+    from .models import Component, IssueRequest
+    from sklearn.linear_model import LinearRegression
+
+    forecast_type = request.GET.get('type', 'demand')
+    days = int(request.GET.get('days', 7))
+    component_id = request.GET.get('component', 'all')
+
+    # Filter by component if specified
+    if component_id != 'all':
+        try:
+            component = Component.objects.get(id=component_id)
+            components = Component.objects.filter(id=component_id)
+        except Component.DoesNotExist:
+            return JsonResponse({'error': 'Component not found'}, status=404)
+    else:
+        components = Component.objects.all()
+
+    # Prepare date range
+    today = timezone.now().date()
+    forecast_dates = [(today + timedelta(days=i)).strftime('%Y-%m-%d') for i in range(days)]
+
+    # Historical data for demand forecast
+    usage_history = []
+    for i in range(90):
+        date = today - timedelta(days=89 - i)
+        if component_id != 'all':
+            count = IssueRequest.objects.filter(component=component, issue_date__date=date).count()
+        else:
+            count = IssueRequest.objects.filter(issue_date__date=date).count()
+        usage_history.append(count)
+
+    # Demand Forecast (simple linear regression)
+    X = np.array(range(len(usage_history))).reshape(-1, 1)
+    y = np.array(usage_history)
+    model = LinearRegression()
+    model.fit(X, y)
+    predicted_demand = []
+    for i in range(days):
+        pred = int(max(0, model.predict([[len(usage_history) + i]])[0]))
+        predicted_demand.append(pred)
+
+    # Stock Forecast (simple: current - cumulative demand)
+    if component_id != 'all':
+        current_stock = [component.quantity] * days
+        min_stock_level = [5] * days  # Example threshold
+    else:
+        current_stock = [sum(c.quantity for c in components)] * days
+        min_stock_level = [10] * days  # Example threshold
+
+    # Reorder Date Prediction (when stock < threshold)
+    reorder_point = []
+    stock = current_stock[0]
+    reorder_date = None
+    for i, demand in enumerate(predicted_demand):
+        stock -= demand
+        reorder_point.append(5 if component_id != 'all' else 10)
+        if reorder_date is None and stock < reorder_point[-1]:
+            reorder_date = forecast_dates[i]
+    reorder_date = reorder_date or 'N/A'
+
+    # Usage Trend Forecast (category usage, here just total usage)
+    trend_growth = f"{int((np.mean(usage_history[-7:]) - np.mean(usage_history[:7])) / (np.mean(usage_history[:7]) + 1) * 100)}%" if np.mean(usage_history[:7]) > 0 else '0%'
+    trend_period = f"{forecast_dates[0]} to {forecast_dates[-1]}"
+    trend_insight = "Usage is stable." if abs(np.mean(usage_history[-7:]) - np.mean(usage_history[:7])) < 2 else ("Increasing" if np.mean(usage_history[-7:]) > np.mean(usage_history[:7]) else "Decreasing")
+
+    # Return Delay Prediction (dummy: random or fixed)
+    return_probability = [30] * days  # Example: 30% chance
+    return_delay = [2] * days  # Example: 2 days delay
+    return_action = ["Send reminder"] * days
+
+    # Prepare datasets for chart.js
+    data = {
+        'labels': forecast_dates,
+        'datasets': [],
+        'summary': {}
+    }
+    if forecast_type == 'demand':
+        data['datasets'] = [
+            {
+                'label': 'Predicted Demand',
+                'data': predicted_demand,
+                'borderColor': '#1cc88a',
+                'backgroundColor': 'rgba(28, 200, 138, 0.05)',
+                'borderDash': [5, 5],
+                'fill': True
+            }
+        ]
+        data['summary'] = {
+            'trend': trend_growth,
+            'peak': max(predicted_demand),
+            'timeline': f"{forecast_dates[0]} to {forecast_dates[-1]}"
+        }
+    elif forecast_type == 'stock':
+        data['datasets'] = [
+            {
+                'label': 'Current Stock',
+                'data': current_stock,
+                'borderColor': '#4e73df',
+                'backgroundColor': 'rgba(78, 115, 223, 0.05)',
+                'fill': True
+            },
+            {
+                'label': 'Minimum Stock Level',
+                'data': min_stock_level,
+                'borderColor': '#e74a3b',
+                'backgroundColor': 'rgba(231, 74, 59, 0.05)',
+                'borderDash': [5, 5],
+                'fill': True
+            }
+        ]
+        data['summary'] = {
+            'risk': 'Low' if min(current_stock) > min_stock_level[0] else 'High',
+            'timeline': f"{forecast_dates[0]} to {forecast_dates[-1]}",
+            'recommendation': 'Monitor stock levels closely.'
+        }
+    elif forecast_type == 'reorder':
+        data['datasets'] = [
+            {
+                'label': 'Current Stock',
+                'data': current_stock,
+                'borderColor': '#4e73df',
+                'backgroundColor': 'rgba(78, 115, 223, 0.05)',
+                'fill': True
+            },
+            {
+                'label': 'Reorder Point',
+                'data': reorder_point,
+                'borderColor': '#f6c23e',
+                'backgroundColor': 'rgba(246, 194, 62, 0.05)',
+                'borderDash': [5, 5],
+                'fill': True
+            }
+        ]
+        data['summary'] = {
+            'date': reorder_date,
+            'quantity': min_stock_level[0],
+            'note': 'Reorder before this date to avoid stockout.'
+        }
+    elif forecast_type == 'trend':
+        data['datasets'] = [
+            {
+                'label': 'Usage Trend',
+                'data': usage_history[-days:],
+                'borderColor': '#36b9cc',
+                'backgroundColor': 'rgba(54, 185, 204, 0.05)',
+                'fill': True
+            }
+        ]
+        data['summary'] = {
+            'growth': trend_growth,
+            'period': trend_period,
+            'insight': trend_insight
+        }
+    elif forecast_type == 'return':
+        data['datasets'] = [
+            {
+                'label': 'Return Probability',
+                'data': return_probability,
+                'borderColor': '#36b9cc',
+                'backgroundColor': 'rgba(54, 185, 204, 0.05)',
+                'fill': True
+            }
+        ]
+        data['summary'] = {
+            'probability': f"{return_probability[0]}%",
+            'delay': f"{return_delay[0]} days",
+            'action': return_action[0]
+        }
+    else:
+        data['datasets'] = []
+        data['summary'] = {}
+
+    return JsonResponse(data)    

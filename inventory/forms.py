@@ -120,6 +120,9 @@ class DirectIssueComponentForm(forms.ModelForm):
         quantity = cleaned_data.get('quantity')
         
         if component and quantity:
+            # Check if component is still available and has sufficient quantity
+            if not component.available:
+                raise forms.ValidationError(f'{component.name} is no longer available.')
             if quantity > component.quantity:
                 raise forms.ValidationError(f'Only {component.quantity} items are available for {component.name}.')
         
@@ -133,13 +136,20 @@ class DirectIssueComponentForm(forms.ModelForm):
         instance.admin = admin
         
         if commit:
-            instance.save()
+            # Use select_for_update to lock the component row
+            component = Component.objects.select_for_update().get(id=instance.component.id)
             
-            # Update component quantity
-            component = instance.component
+            # Double check availability and quantity
+            if not component.available or component.quantity < instance.quantity:
+                raise ValueError(f'Component {component.name} is no longer available or has insufficient quantity.')
+            
+            # Update component quantity and availability
             component.quantity -= instance.quantity
             if component.quantity <= 0:
                 component.available = False
             component.save()
+            
+            # Save the issue request
+            instance.save()
         
         return instance 
